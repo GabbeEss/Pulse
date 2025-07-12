@@ -1,0 +1,166 @@
+🚀 Starting Pulse API Tests...
+Testing against: https://760db4b3-114c-412c-a5f7-52f931b271ed.preview.emergentagent.com
+
+🔍 Testing Health Endpoints...
+✅ Root endpoint
+✅ Health check
+
+🔍 Testing User Registration...
+✅ User 1 registration
+✅ User 2 registration
+✅ Duplicate registration prevention
+
+🔍 Testing User Login...
+✅ Valid login
+✅ Invalid login rejection
+
+🔍 Testing Partner Pairing...
+✅ Pairing code generation
+✅ Partner linking
+✅ Prevent double linking
+
+🎯 Testing Enhanced HeatTask Features...
+
+🔍 Testing Enhanced HeatTask System...
+✅ Task creation with token rewards
+✅ Active tasks with countdown
+✅ Task status details
+✅ Photo proof submission (base64)
+✅ Task approval with token award
+✅ Task rejection workflow
+✅ Task expiration check
+✅ All tasks retrieval
+
+🔍 Testing Token/Reward Bank System...
+✅ User token balance endpoint
+✅ Couple token info
+✅ Reward creation
+✅ Reward listing
+✅ Reward redemption with insufficient tokens
+✅ Cheap reward redemption
+
+🔍 Testing Enhanced WebSocket Notifications...
+✅ WebSocket endpoint for user 1
+✅ WebSocket endpoint for user 2
+   📡 Testing notification trigger scenarios...
+✅ Task creation notification trigger
+✅ Proof submission notification trigger
+✅ Task approval notification trigger
+✅ Reward creation notification trigger
+✅ Reward redemption notification trigger
+✅ Mood creation notification trigger
+✅ Task expiration notification trigger
+   📋 WebSocket Notification Types Verified:
+      ✓ new_task - Task assignment notifications
+      ✓ task_completed - Proof submission notifications
+      ✓ task_approved - Task approval notifications
+      ✓ task_rejected - Task rejection notifications
+      ✓ task_expired - Task expiration notifications
+      ✓ new_reward - Reward creation notifications
+      ✓ reward_redeemed - Reward redemption notifications
+      ✓ mood_update - Mood sharing notifications
+
+🔍 Testing Database Performance...
+✅ Database indexes setup
+✅ Tasks retrieval performance
+✅ Active tasks retrieval performance
+✅ Rewards retrieval performance
+✅ Token balance retrieval performance
+✅ Couple tokens retrieval performance
+✅ Moods retrieval performance
+
+🔍 Testing Mood System...
+✅ Mood creation
+✅ AI suggestion for spicy mood
+✅ Mood type: horny
+✅ Mood type: teasing
+✅ Mood type: romantic
+✅ Mood type: playful
+✅ Mood type: unavailable
+✅ Mood retrieval
+
+🔍 Testing Expanded Spicy Mood System...
+   🌶️ Testing new spicy mood types...
+✅ New spicy mood: available_for_use
+✅ New spicy mood: feeling_submissive
+✅ New spicy mood: wanna_edge
+✅ New spicy mood: use_me_how_you_want
+✅ New spicy mood: feeling_dominant
+✅ New spicy mood: need_attention
+✅ New spicy mood: bratty_mood
+✅ New spicy mood: worship_me
+   🔥 Testing extreme mode functionality...
+✅ Extreme mode mood creation
+✅ Extreme mode AI suggestion
+✅ Extreme mode content appropriateness
+   ⚖️ Testing standard vs extreme mode differences...
+✅ Standard vs extreme mode suggestions
+   🤖 Testing AI suggestion endpoint with extreme mode...
+✅ AI suggestion with extreme mode parameter
+   📝 Testing mood context generation...
+✅ Mood context for available_for_use (standard)
+✅ Mood context for feeling_submissive (extreme)
+✅ Mood context for wanna_edge (standard)
+✅ Mood context for use_me_how_you_want (extreme)
+✅ Mood context for feeling_dominant (standard)
+✅ Mood context for bratty_mood (extreme)
+   🎯 Testing spicy mood AI suggestion triggers...
+✅ Spicy moods trigger AI suggestions
+   🚫 Testing non-spicy moods don't trigger AI...
+✅ Non-spicy moods don't trigger AI
+
+🔍 Testing AI Suggestion System...
+✅ AI suggestion structure
+✅ OpenAI integration (AI active)
+   🌶️ Testing enhanced mood types with extreme mode...
+✅ Enhanced mood: available_for_use (standard)
+✅ Enhanced mood: available_for_use (extreme)
+✅ Enhanced mood: feeling_submissive (standard)
+✅ Enhanced mood: feeling_submissive (extreme)
+✅ Enhanced mood: wanna_edge (standard)
+✅ Enhanced mood: wanna_edge (extreme)
+✅ Enhanced mood: use_me_how_you_want (extreme)
+✅ Enhanced mood: feeling_dominant (standard)
+✅ Enhanced mood: feeling_dominant (extreme)
+✅ Enhanced mood: need_attention (standard)
+✅ Enhanced mood: bratty_mood (extreme)
+✅ Enhanced mood: worship_me (standard)
+✅ AI suggestion for feeling_spicy intensity 1
+✅ AI suggestion for feeling_spicy intensity 3
+✅ AI suggestion for feeling_spicy intensity 5
+✅ AI suggestion for horny intensity 2
+✅ AI suggestion for horny intensity 4
+✅ AI suggestion for teasing intensity 1
+✅ AI suggestion for teasing intensity 5
+✅ AI suggestion for romantic intensity 3
+✅ AI suggestion for playful intensity 2
+✅ AI response variety
+   🔥 Testing extreme mode content differentiation...
+✅ Extreme vs standard mode suggestions
+   🎭 Testing mock suggestion fallback for new moods...
+✅ Mock fallback for new moods
+✅ Fallback handling: Invalid mood type
+✅ Fallback handling: Invalid intensity (too low)
+✅ Fallback handling: Invalid intensity (too high)
+✅ Fallback handling: Empty mood type
+✅ AI suggestion performance
+✅ Mood creation includes AI suggestion
+
+📋 OpenAI Integration Analysis:
+   - System correctly attempts OpenAI GPT-4o API calls
+   - Proper error handling when OpenAI quota exceeded
+   - Graceful fallback to mock suggestions maintains functionality
+   - emergentintegrations library properly configured
+   - Enhanced mood context and extreme mode support implemented
+✅ OpenAI integration architecture
+
+🔍 Testing Error Handling...
+❌ Unauthorized access handling - Should return 401 for missing token
+✅ Invalid task ID handling
+✅ Invalid reward ID handling
+✅ Proof submission error handling
+✅ Task approval error handling
+
+📊 Test Results: 106/107 passed
+Success Rate: 99.1%
+🎉 Backend API tests highly successful!
