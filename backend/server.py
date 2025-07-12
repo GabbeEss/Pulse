@@ -224,7 +224,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 # Token management helper functions
 async def get_user_tokens(user_id: str, couple_id: str) -> int:
     """Get current token balance for a user"""
-    user_tokens = await db.user_tokens.find_one({"user_id": user_id, "couple_id": couple_id})
+    user_tokens = await db.user_tokens.find_one({"user_id": user_id, "couple_id": couple_id}, {"_id": 0})
     return user_tokens["tokens"] if user_tokens else 0
 
 async def add_tokens(user_id: str, couple_id: str, tokens: int) -> int:
