@@ -834,6 +834,99 @@ async def redeem_reward(redeem_data: RewardRedeem, current_user: dict = Depends(
         "tokens_spent": reward["tokens_cost"],
         "new_balance": new_balance
     }
+
+# Task expiration and notification management
+@api_router.get("/tasks/active")
+async def get_active_tasks(current_user: dict = Depends(get_current_user)):
+    """Get active tasks for the user with time remaining"""
+    if not current_user.get("couple_id"):
+        return []
+    
+    # Get pending and completed tasks
+    tasks = await db.tasks.find({
+        "couple_id": current_user["couple_id"],
+        "status": {"$in": ["pending", "completed"]},
+        "expires_at": {"$gt": datetime.utcnow()}
+    }).sort("created_at", -1).to_list(20)
+    
+    # Add time remaining for each task
+    for task in tasks:
+        expires_at = task["expires_at"]
+        if isinstance(expires_at, str):
+            expires_at = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
+        
+        time_remaining = expires_at - datetime.utcnow()
+        task["time_remaining_minutes"] = max(0, int(time_remaining.total_seconds() / 60))
+        task["is_expired"] = time_remaining.total_seconds() <= 0
+    
+    return tasks
+
+@api_router.post("/tasks/check-expiry")
+async def check_task_expiry(current_user: dict = Depends(get_current_user)):
+    """Check for expired tasks and update their status"""
+    if not current_user.get("couple_id"):
+        return {"expired_count": 0}
+    
+    # Find expired tasks that are still pending
+    expired_tasks = await db.tasks.find({
+        "couple_id": current_user["couple_id"],
+        "status": "pending",
+        "expires_at": {"$lt": datetime.utcnow()}
+    }).to_list(100)
+    
+    expired_count = 0
+    for task in expired_tasks:
+        # Update status to expired
+        await db.tasks.update_one(
+            {"id": task["id"]},
+            {"$set": {"status": "expired"}}
+        )
+        
+        # Send expiration notification
+        await manager.send_to_partner(current_user["id"], {
+            "type": "task_expired",
+            "task_id": task["id"],
+            "task_title": task["title"],
+            "message": f"Task expired: {task['title']}"
+        })
+        
+        expired_count += 1
+    
+    return {"expired_count": expired_count}
+
+# Enhanced task status endpoint
+@api_router.get("/tasks/{task_id}/status")
+async def get_task_status(task_id: str, current_user: dict = Depends(get_current_user)):
+    """Get detailed status of a specific task"""
+    task = await db.tasks.find_one({"id": task_id})
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    if task["couple_id"] != current_user.get("couple_id"):
+        raise HTTPException(status_code=403, detail="Not authorized to view this task")
+    
+    # Calculate time remaining
+    expires_at = task["expires_at"]
+    if isinstance(expires_at, str):
+        expires_at = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
+    
+    time_remaining = expires_at - datetime.utcnow()
+    
+    return {
+        "task": task,
+        "time_remaining_minutes": max(0, int(time_remaining.total_seconds() / 60)),
+        "is_expired": time_remaining.total_seconds() <= 0,
+        "can_submit_proof": (
+            task["receiver_id"] == current_user["id"] and 
+            task["status"] == "pending" and 
+            time_remaining.total_seconds() > 0
+        ),
+        "can_approve": (
+            task["creator_id"] == current_user["id"] and 
+            task["status"] == "completed"
+        )
+    }
+
 @app.websocket("/ws/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, user_id: str):
     await manager.connect(websocket, user_id)
