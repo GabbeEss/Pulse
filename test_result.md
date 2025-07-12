@@ -240,6 +240,28 @@ frontend:
       - working: true
         agent: "testing"
         comment: "VERIFIED WORKING: Enhanced Real-time Notifications system implemented correctly! ✅ NotificationToast component with proper positioning and styling ✅ WebSocket hook implemented with notification management ✅ Auto-dismiss functionality ✅ Type-specific colors and emojis for different notification types ✅ Visual feedback system in place ✅ Notification container positioned correctly in top-right corner. Minor: WebSocket connection issues in testing environment are expected and don't affect core functionality."
+  - task: "Expanded Spicy Mood System - Frontend UI"
+    implemented: false
+    working: false
+    file: "frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "IMPLEMENTING: Enhanced mood selector with expanded categories (regular, spicy, extreme), hover tooltips with descriptions, extreme mode toggle, and mood-triggered AI task suggestions."
+  - task: "Integrated Task/Reward Creation - Frontend UX"
+    implemented: false
+    working: false
+    file: "frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "IMPLEMENTING: Consolidating TaskCreator to include reward directly in form, hiding separate RewardCreator, updating reward input label to 'What will your partner get if they complete this?'."
 
 metadata:
   created_by: "main_agent"
