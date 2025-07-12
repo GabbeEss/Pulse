@@ -553,7 +553,7 @@ async def create_task(task: TaskCreate, current_user: dict = Depends(get_current
     partner = await db.users.find_one({
         "couple_id": current_user["couple_id"],
         "id": {"$ne": current_user["id"]}
-    })
+    }, {"_id": 0})
     
     if not partner:
         raise HTTPException(status_code=404, detail="Partner not found")
