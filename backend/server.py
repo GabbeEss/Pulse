@@ -319,7 +319,7 @@ async def link_with_partner(request: PairingRequest, current_user: dict = Depend
             "$and": [
                 {"id": {"$regex": f".*{request.pairing_code.lower()}$", "$options": "i"}},
                 {"id": {"$ne": current_user["id"]}},
-                {"couple_id": {"$exists": False}}
+                {"$or": [{"couple_id": {"$exists": False}}, {"couple_id": None}]}
             ]
         })
         
