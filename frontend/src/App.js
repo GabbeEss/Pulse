@@ -755,7 +755,7 @@ const PairingScreen = ({ user }) => {
                 Linking...
               </div>
             ) : (
-              `Link with Partner ${pairingCode.length === 6 ? '✨' : `(${6 - pairingCode.length} digits needed)`}`
+              `Link with Partner ${pairingCode.length === 6 ? '✨' : `(${6 - pairingCode.length} chars needed)`}`
             )}
           </button>
 
