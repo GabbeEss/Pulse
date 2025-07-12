@@ -256,9 +256,9 @@ class PulseAPITester:
             self.log_test("AI suggestions", False, "Missing user token")
             return False
 
-        # Test AI suggestion endpoint
-        suggestion_data = {"mood_type": "feeling_spicy", "intensity": 5}
-        success, response = self.make_request('POST', 'ai/suggest-task', suggestion_data, self.user1_token, expected_status=200)
+        # Test AI suggestion endpoint with query parameters
+        endpoint = 'ai/suggest-task?mood_type=feeling_spicy&intensity=5'
+        success, response = self.make_request('POST', endpoint, None, self.user1_token, expected_status=200)
         if success:
             has_title = 'title' in response
             has_description = 'description' in response
