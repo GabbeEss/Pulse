@@ -590,7 +590,7 @@ async def get_tasks(current_user: dict = Depends(get_current_user)):
     
     tasks = await db.tasks.find({
         "couple_id": current_user["couple_id"]
-    }).sort("created_at", -1).to_list(20)
+    }, {"_id": 0}).sort("created_at", -1).to_list(20)
     
     return tasks
 
