@@ -1206,10 +1206,11 @@ const MoodSelector = ({ onMoodSelect }) => {
   );
 };
 
-// Enhanced Task Card Component
-const TaskCard = ({ task, currentUser, onProofSubmit, onTaskApprove, onRefresh }) => {
+// Enhanced Task Card Component with Delete Functionality
+const TaskCard = ({ task, currentUser, onProofSubmit, onTaskApprove, onRefresh, onTaskDelete }) => {
   const [showProofModal, setShowProofModal] = useState(false);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [proofText, setProofText] = useState('');
   const [proofPhoto, setProofPhoto] = useState(null);
   const [approvalMessage, setApprovalMessage] = useState('');
@@ -1219,6 +1220,7 @@ const TaskCard = ({ task, currentUser, onProofSubmit, onTaskApprove, onRefresh }
   const isReceiver = task.receiver_id === currentUser.id;
   const canSubmitProof = isReceiver && task.status === 'pending';
   const canApprove = isCreator && task.status === 'completed';
+  const canDelete = isCreator || (task.status === 'expired' || task.status === 'rejected');
 
   const getStatusColor = (status) => {
     switch (status) {
