@@ -174,15 +174,22 @@ class UserTokens(BaseModel):
 class Reward(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     couple_id: str
+    creator_id: str  # Who created this reward
     title: str
     description: str
     tokens_cost: int
+    is_redeemed: bool = False
+    redeemed_by: Optional[str] = None  # User ID who redeemed
+    redeemed_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class RewardCreate(BaseModel):
     title: str
     description: str
     tokens_cost: int
+
+class RewardRedeem(BaseModel):
+    reward_id: str
 
 # Helper functions
 def create_access_token(data: dict):
