@@ -500,6 +500,25 @@ async def root():
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.utcnow()}
 
+@api_router.post("/admin/setup-indexes")
+async def setup_database_indexes():
+    """Setup database indexes for better performance"""
+    try:
+        # Create index on users collection for pairing code optimization
+        await db.users.create_index("id")
+        await db.users.create_index("couple_id")
+        await db.users.create_index("email", unique=True)
+        
+        # Create indexes for other collections
+        await db.couples.create_index("id")
+        await db.moods.create_index([("couple_id", 1), ("expires_at", 1)])
+        await db.tasks.create_index([("couple_id", 1), ("created_at", -1)])
+        
+        return {"message": "Database indexes created successfully"}
+    except Exception as e:
+        logger.error(f"Error creating indexes: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create database indexes")
+
 # Include the router in the main app
 app.include_router(api_router)
 
