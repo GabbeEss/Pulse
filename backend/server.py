@@ -963,10 +963,29 @@ async def setup_database_indexes():
         await db.users.create_index("couple_id")
         await db.users.create_index("email", unique=True)
         
-        # Create indexes for other collections
+        # Create indexes for couples collection
         await db.couples.create_index("id")
+        await db.couples.create_index("pairing_code")
+        
+        # Create indexes for moods collection
         await db.moods.create_index([("couple_id", 1), ("expires_at", 1)])
+        await db.moods.create_index([("user_id", 1), ("created_at", -1)])
+        
+        # Create indexes for tasks collection (enhanced for new features)
         await db.tasks.create_index([("couple_id", 1), ("created_at", -1)])
+        await db.tasks.create_index([("receiver_id", 1), ("status", 1)])
+        await db.tasks.create_index([("creator_id", 1), ("status", 1)])
+        await db.tasks.create_index([("expires_at", 1), ("status", 1)])  # For expiry checks
+        
+        # Create indexes for new collections
+        # User tokens collection
+        await db.user_tokens.create_index([("user_id", 1), ("couple_id", 1)], unique=True)
+        await db.user_tokens.create_index("couple_id")
+        
+        # Rewards collection
+        await db.rewards.create_index([("couple_id", 1), ("created_at", -1)])
+        await db.rewards.create_index([("couple_id", 1), ("is_redeemed", 1)])
+        await db.rewards.create_index("creator_id")
         
         return {"message": "Database indexes created successfully"}
     except Exception as e:
