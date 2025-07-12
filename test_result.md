@@ -283,7 +283,6 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Expanded Spicy Mood System - Backend Enhancement"
     - "Expanded Spicy Mood System - Frontend UI"
     - "Integrated Task/Reward Creation - Frontend UX"
   stuck_tasks: []
