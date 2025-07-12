@@ -605,11 +605,6 @@ const PairingScreen = ({ user }) => {
     getPairingCode();
   }, []);
 
-  // Debug the pairing code state
-  useEffect(() => {
-    setDebugInfo(`Code length: ${pairingCode.length}, Valid: ${pairingCode.length === 6}, Code: "${pairingCode}"`);
-  }, [pairingCode]);
-
   const getPairingCode = async () => {
     try {
       const response = await axios.get(`${API}/pairing/code`);
