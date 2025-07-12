@@ -336,24 +336,109 @@ const PhotoUpload = ({ onPhotoSelected, existingPhoto }) => {
 
 // Token Display Component
 const TokenDisplay = ({ tokens, lifetimeTokens, size = "normal" }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+
   const sizeClasses = {
     small: "text-sm",
-    normal: "text-lg",
-    large: "text-2xl"
+    normal: "text-base", 
+    large: "text-lg"
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-yellow-400">🪙</span>
-      <span className={`font-bold text-yellow-400 ${sizeClasses[size]}`}>
-        {tokens || 0}
-      </span>
-      {lifetimeTokens !== undefined && (
-        <span className="text-xs text-gray-400">
-          ({lifetimeTokens} lifetime)
-        </span>
+    <>
+      <div 
+        className="relative"
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+      >
+        <button
+          onClick={() => setShowModal(true)}
+          className={`flex items-center gap-1 ${sizeClasses[size]} text-yellow-400 hover:text-yellow-300 transition-colors cursor-pointer`}
+        >
+          <span>🪙</span>
+          <span className="font-semibold">{tokens}</span>
+          {lifetimeTokens && size === "normal" && (
+            <span className="text-xs text-gray-400">({lifetimeTokens} total)</span>
+          )}
+        </button>
+
+        {/* Hover Tooltip */}
+        {showTooltip && (
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-black/90 text-white text-xs rounded-lg p-2 max-w-48 z-10 whitespace-normal">
+            💡 Click to learn about tokens and rewards!
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black/90"></div>
+          </div>
+        )}
+      </div>
+
+      {/* Token Information Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-black/90 backdrop-blur-lg rounded-2xl p-6 border border-white/10 max-w-md w-full">
+            <div className="text-center mb-4">
+              <h3 className="text-xl font-bold text-white mb-2 flex items-center justify-center gap-2">
+                🪙 What are Tokens?
+              </h3>
+            </div>
+            
+            <div className="space-y-4 text-sm text-gray-300">
+              <div className="bg-white/10 rounded-xl p-4">
+                <h4 className="text-white font-semibold mb-2 flex items-center gap-2">
+                  💰 How You Earn Tokens
+                </h4>
+                <ul className="space-y-1 text-xs">
+                  <li>• Complete Heat Tasks successfully (1-20 tokens each)</li>
+                  <li>• Get your proof approved by your partner</li>
+                  <li>• Higher intensity tasks = more tokens!</li>
+                </ul>
+              </div>
+
+              <div className="bg-white/10 rounded-xl p-4">
+                <h4 className="text-white font-semibold mb-2 flex items-center gap-2">
+                  🎁 How You Use Tokens
+                </h4>
+                <ul className="space-y-1 text-xs">
+                  <li>• Unlock rewards your partner has set</li>
+                  <li>• Redeem special treats and surprises</li>
+                  <li>• Save them for bigger, better rewards</li>
+                  <li>• Show your dedication and effort!</li>
+                </ul>
+              </div>
+
+              <div className="bg-gradient-to-r from-pink-500/20 to-purple-500/20 rounded-xl p-4">
+                <h4 className="text-white font-semibold mb-2 flex items-center gap-2">
+                  ✨ Your Token Stats
+                </h4>
+                <div className="flex justify-between items-center text-sm">
+                  <span>Current Balance:</span>
+                  <span className="text-yellow-400 font-semibold">🪙 {tokens}</span>
+                </div>
+                {lifetimeTokens && (
+                  <div className="flex justify-between items-center text-sm">
+                    <span>Lifetime Earned:</span>
+                    <span className="text-yellow-400 font-semibold">🏆 {lifetimeTokens}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="text-center text-xs text-gray-400">
+                💡 Complete more Heat Tasks to earn tokens and unlock amazing rewards from your partner!
+              </div>
+            </div>
+            
+            <div className="flex justify-center mt-6">
+              <button
+                onClick={() => setShowModal(false)}
+                className="bg-gradient-to-r from-pink-500 to-purple-500 text-white py-2 px-6 rounded-xl font-semibold hover:opacity-90 transition-opacity"
+              >
+                Got it!
+              </button>
+            </div>
+          </div>
+        </div>
       )}
-    </div>
+    </>
   );
 };
 
