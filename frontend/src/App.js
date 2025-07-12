@@ -1812,7 +1812,15 @@ const Dashboard = ({ user }) => {
     }
   };
 
-  const handleRewardRedeem = async (rewardId) => {
+  const handleTaskDelete = async (taskId) => {
+    try {
+      await axios.delete(`${API}/tasks/${taskId}`);
+      fetchTasks();
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      throw error;
+    }
+  };
     try {
       await axios.post(`${API}/rewards/redeem`, { reward_id: rewardId });
       fetchRewards();
