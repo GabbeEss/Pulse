@@ -1492,12 +1492,13 @@ const Dashboard = ({ user }) => {
     }
   };
 
-  const handleMoodSelect = async (mood, intensity) => {
+  const handleMoodSelect = async (mood, intensity, extremeMode) => {
     try {
       const response = await axios.post(`${API}/moods`, {
         mood_type: mood.id,
         intensity: intensity,
-        duration_minutes: 60
+        duration_minutes: 60,
+        is_extreme_mode: extremeMode
       });
       
       if (response.data.ai_suggestion) {
