@@ -606,27 +606,98 @@ async def submit_proof(task_id: str, proof: TaskProof, current_user: dict = Depe
     if task["status"] != "pending":
         raise HTTPException(status_code=400, detail="Task is not pending")
     
+    # Check if task has expired
     if datetime.utcnow() > datetime.fromisoformat(task["expires_at"].replace("Z", "+00:00")):
+        # Mark as expired
+        await db.tasks.update_one(
+            {"id": task_id},
+            {"$set": {"status": "expired"}}
+        )
         raise HTTPException(status_code=400, detail="Task has expired")
     
-    # Update task with proof
+    # Update task with proof and mark as completed (awaiting approval)
+    update_data = {
+        "proof_text": proof.proof_text,
+        "proof_photo_base64": proof.proof_photo_base64,
+        "status": "completed",
+        "completed_at": datetime.utcnow()
+    }
+    
     await db.tasks.update_one(
         {"id": task_id},
-        {"$set": {
-            "proof_text": proof.proof_text,
-            "proof_url": proof.proof_url,
-            "status": "completed"
-        }}
+        {"$set": update_data}
     )
     
-    # Send notification to creator
+    # Send notification to creator for approval
     await manager.send_to_partner(current_user["id"], {
         "type": "task_completed",
         "task_id": task_id,
-        "proof": proof.dict()
+        "message": f"Task completed by your partner: {task['title']}",
+        "proof": {
+            "text": proof.proof_text,
+            "has_photo": bool(proof.proof_photo_base64)
+        }
     })
     
-    return {"message": "Proof submitted successfully"}
+    return {"message": "Proof submitted successfully. Awaiting partner approval."}
+
+@api_router.patch("/tasks/{task_id}/approve")
+async def approve_task(task_id: str, approval: TaskApproval, current_user: dict = Depends(get_current_user)):
+    task = await db.tasks.find_one({"id": task_id})
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    if task["creator_id"] != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Not authorized to approve this task")
+    
+    if task["status"] != "completed":
+        raise HTTPException(status_code=400, detail="Task is not awaiting approval")
+    
+    # Update task status based on approval
+    new_status = "approved" if approval.approved else "rejected"
+    update_data = {
+        "status": new_status,
+        "approved_at": datetime.utcnow(),
+        "approval_message": approval.message
+    }
+    
+    await db.tasks.update_one(
+        {"id": task_id},
+        {"$set": update_data}
+    )
+    
+    # If approved, award tokens to the task receiver
+    tokens_awarded = 0
+    if approval.approved:
+        tokens_awarded = await add_tokens(
+            task["receiver_id"], 
+            task["couple_id"], 
+            task["tokens_earned"]
+        )
+    
+    # Send notification to task receiver
+    notification_message = f"Task {'approved' if approval.approved else 'rejected'}: {task['title']}"
+    if approval.approved:
+        notification_message += f" | +{task['tokens_earned']} tokens earned!"
+    
+    await manager.send_to_partner(current_user["id"], {
+        "type": "task_approved" if approval.approved else "task_rejected",
+        "task_id": task_id,
+        "approved": approval.approved,
+        "message": notification_message,
+        "approval_message": approval.message,
+        "tokens_earned": task["tokens_earned"] if approval.approved else 0,
+        "new_token_balance": tokens_awarded if approval.approved else None
+    })
+    
+    result = {
+        "message": f"Task {'approved' if approval.approved else 'rejected'} successfully"
+    }
+    
+    if approval.approved:
+        result["tokens_awarded"] = task["tokens_earned"]
+    
+    return result
 
 # WebSocket endpoint
 @app.websocket("/ws/{user_id}")
