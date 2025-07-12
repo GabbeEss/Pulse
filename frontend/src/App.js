@@ -720,15 +720,13 @@ const PairingScreen = ({ user }) => {
             <label className="block text-gray-300 mb-2 font-semibold">Partner's Code:</label>
             <input
               type="text"
-              placeholder="Enter 6-digit code"
+              placeholder="Enter 6-character code"
               value={pairingCode}
               onChange={handlePairingCodeChange}
-              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 text-center text-xl font-mono tracking-wider"
+              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 text-center text-xl font-mono tracking-wider uppercase"
               maxLength="6"
               autoComplete="off"
             />
-            {/* Debug info - remove this in production */}
-            <p className="text-xs text-gray-500 mt-1">{debugInfo}</p>
           </div>
 
           {error && (
