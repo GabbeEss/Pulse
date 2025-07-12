@@ -1118,18 +1118,22 @@ const TaskCreator = ({ onTaskCreate }) => {
 const Dashboard = ({ user }) => {
   const [moods, setMoods] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [rewards, setRewards] = useState([]);
+  const [tokens, setTokens] = useState({ tokens: 0, lifetime_tokens: 0 });
   const [activeTab, setActiveTab] = useState('moods');
   const [aiSuggestion, setAiSuggestion] = useState(null);
   const { logout } = useAuth();
-  const { messages } = useWebSocket(user.id);
+  const { messages, notifications, dismissNotification } = useWebSocket(user.id);
 
   useEffect(() => {
     fetchMoods();
     fetchTasks();
+    fetchRewards();
+    fetchTokens();
   }, []);
 
   useEffect(() => {
-    // Handle WebSocket messages
+    // Handle WebSocket messages with enhanced notifications
     messages.forEach(message => {
       if (message.type === 'mood_update') {
         fetchMoods();
@@ -1137,6 +1141,14 @@ const Dashboard = ({ user }) => {
         fetchTasks();
       } else if (message.type === 'task_completed') {
         fetchTasks();
+      } else if (message.type === 'task_approved' || message.type === 'task_rejected') {
+        fetchTasks();
+        fetchTokens(); // Refresh tokens on approval
+      } else if (message.type === 'new_reward') {
+        fetchRewards();
+      } else if (message.type === 'reward_redeemed') {
+        fetchRewards();
+        fetchTokens(); // Refresh tokens on redemption
       }
     });
   }, [messages]);
@@ -1152,10 +1164,28 @@ const Dashboard = ({ user }) => {
 
   const fetchTasks = async () => {
     try {
-      const response = await axios.get(`${API}/tasks`);
+      const response = await axios.get(`${API}/tasks/active`);
       setTasks(response.data);
     } catch (error) {
       console.error('Error fetching tasks:', error);
+    }
+  };
+
+  const fetchRewards = async () => {
+    try {
+      const response = await axios.get(`${API}/rewards`);
+      setRewards(response.data);
+    } catch (error) {
+      console.error('Error fetching rewards:', error);
+    }
+  };
+
+  const fetchTokens = async () => {
+    try {
+      const response = await axios.get(`${API}/tokens`);
+      setTokens(response.data);
+    } catch (error) {
+      console.error('Error fetching tokens:', error);
     }
   };
 
@@ -1186,6 +1216,47 @@ const Dashboard = ({ user }) => {
     }
   };
 
+  const handleProofSubmit = async (taskId, proofData) => {
+    try {
+      await axios.patch(`${API}/tasks/${taskId}/proof`, proofData);
+      fetchTasks();
+    } catch (error) {
+      console.error('Error submitting proof:', error);
+      throw error;
+    }
+  };
+
+  const handleTaskApprove = async (taskId, approvalData) => {
+    try {
+      await axios.patch(`${API}/tasks/${taskId}/approve`, approvalData);
+      fetchTasks();
+      fetchTokens();
+    } catch (error) {
+      console.error('Error approving task:', error);
+      throw error;
+    }
+  };
+
+  const handleRewardCreate = async (rewardData) => {
+    try {
+      await axios.post(`${API}/rewards`, rewardData);
+      fetchRewards();
+    } catch (error) {
+      console.error('Error creating reward:', error);
+    }
+  };
+
+  const handleRewardRedeem = async (rewardId) => {
+    try {
+      await axios.post(`${API}/rewards/redeem`, { reward_id: rewardId });
+      fetchRewards();
+      fetchTokens();
+    } catch (error) {
+      console.error('Error redeeming reward:', error);
+      throw error;
+    }
+  };
+
   const formatTimeRemaining = (expiresAt) => {
     const now = new Date();
     const expires = new Date(expiresAt);
@@ -1199,21 +1270,38 @@ const Dashboard = ({ user }) => {
     return `${hours}h ${minutes}m`;
   };
 
+  const availableRewards = rewards.filter(r => !r.is_redeemed);
+  const redeemedRewards = rewards.filter(r => r.is_redeemed);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-pink-900 to-red-900 p-4">
       <div className="max-w-md mx-auto">
-        {/* Header */}
+        {/* Notification Toasts */}
+        <div className="fixed top-4 right-4 z-50 space-y-2">
+          {notifications.map(notification => (
+            <NotificationToast
+              key={notification.id}
+              notification={notification}
+              onDismiss={dismissNotification}
+            />
+          ))}
+        </div>
+
+        {/* Header with Token Display */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-white">💓 Pulse</h1>
             <p className="text-gray-300">Hey {user.name}!</p>
           </div>
-          <button
-            onClick={logout}
-            className="p-2 bg-white/10 rounded-full text-gray-300 hover:bg-white/20 transition-colors"
-          >
-            <span className="text-xl">🚪</span>
-          </button>
+          <div className="flex items-center gap-4">
+            <TokenDisplay tokens={tokens.tokens} lifetimeTokens={tokens.lifetime_tokens} size="normal" />
+            <button
+              onClick={logout}
+              className="p-2 bg-white/10 rounded-full text-gray-300 hover:bg-white/20 transition-colors"
+            >
+              <span className="text-xl">🚪</span>
+            </button>
+          </div>
         </div>
 
         {/* AI Suggestion Modal */}
@@ -1232,7 +1320,8 @@ const Dashboard = ({ user }) => {
                     handleTaskCreate({
                       title: aiSuggestion.title,
                       description: aiSuggestion.description,
-                      duration_minutes: aiSuggestion.default_duration_minutes
+                      duration_minutes: aiSuggestion.default_duration_minutes,
+                      tokens_earned: 7
                     });
                     setAiSuggestion(null);
                   }}
@@ -1251,7 +1340,7 @@ const Dashboard = ({ user }) => {
           </div>
         )}
 
-        {/* Tab Navigation */}
+        {/* Enhanced Tab Navigation */}
         <div className="flex bg-black/20 backdrop-blur-lg rounded-2xl p-1 mb-6">
           <button
             onClick={() => setActiveTab('moods')}
@@ -1273,9 +1362,19 @@ const Dashboard = ({ user }) => {
           >
             Tasks
           </button>
+          <button
+            onClick={() => setActiveTab('rewards')}
+            className={`flex-1 py-2 px-4 rounded-xl font-semibold transition-colors ${
+              activeTab === 'rewards'
+                ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white'
+                : 'text-gray-300 hover:text-white'
+            }`}
+          >
+            Rewards
+          </button>
         </div>
 
-        {/* Content */}
+        {/* Content Sections */}
         <div className="space-y-6">
           {activeTab === 'moods' && (
             <div className="space-y-6">
@@ -1309,27 +1408,52 @@ const Dashboard = ({ user }) => {
               
               {tasks.length > 0 && (
                 <div className="space-y-4">
+                  <h3 className="text-lg font-bold text-white">Active Tasks</h3>
                   {tasks.map((task) => (
-                    <div key={task.id} className="bg-black/20 backdrop-blur-lg rounded-2xl p-6 border border-white/10">
-                      <div className="flex items-start justify-between mb-3">
-                        <h4 className="text-lg font-semibold text-white">{task.title}</h4>
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          task.status === 'completed' ? 'bg-green-500/20 text-green-400' :
-                          task.status === 'expired' ? 'bg-red-500/20 text-red-400' :
-                          'bg-yellow-500/20 text-yellow-400'
-                        }`}>
-                          {task.status}
-                        </span>
-                      </div>
-                      <p className="text-gray-300 mb-3">{task.description}</p>
-                      {task.reward && (
-                        <p className="text-pink-400 mb-3">🎁 Reward: {task.reward}</p>
-                      )}
-                      <div className="flex items-center justify-between text-sm text-gray-400">
-                        <span>{task.creator_id === user.id ? 'Created by you' : 'From your partner'}</span>
-                        <span>{formatTimeRemaining(task.expires_at)}</span>
-                      </div>
-                    </div>
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      currentUser={user}
+                      onProofSubmit={handleProofSubmit}
+                      onTaskApprove={handleTaskApprove}
+                      onRefresh={fetchTasks}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'rewards' && (
+            <div className="space-y-6">
+              <RewardCreator onRewardCreate={handleRewardCreate} />
+              
+              {availableRewards.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-bold text-white">Available Rewards</h3>
+                  {availableRewards.map((reward) => (
+                    <RewardCard
+                      key={reward.id}
+                      reward={reward}
+                      onRedeem={handleRewardRedeem}
+                      userTokens={tokens.tokens}
+                      isRedeemable={true}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {redeemedRewards.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-bold text-white">Redeemed Rewards</h3>
+                  {redeemedRewards.map((reward) => (
+                    <RewardCard
+                      key={reward.id}
+                      reward={reward}
+                      onRedeem={handleRewardRedeem}
+                      userTokens={tokens.tokens}
+                      isRedeemable={false}
+                    />
                   ))}
                 </div>
               )}
