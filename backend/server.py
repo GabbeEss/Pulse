@@ -261,7 +261,7 @@ async def spend_tokens(user_id: str, couple_id: str, tokens: int) -> bool:
 
 async def get_couple_tokens(couple_id: str) -> Dict[str, int]:
     """Get token balances for both users in a couple"""
-    tokens_data = await db.user_tokens.find({"couple_id": couple_id}).to_list(2)
+    tokens_data = await db.user_tokens.find({"couple_id": couple_id}, {"_id": 0}).to_list(2)
     
     result = {}
     for token_doc in tokens_data:
