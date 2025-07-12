@@ -283,19 +283,37 @@ async def link_with_partner(request: PairingRequest, current_user: dict = Depend
     if current_user.get("couple_id"):
         raise HTTPException(status_code=400, detail="Already linked with a partner")
     
-    # Find partner with this pairing code
-    partner = await db.users.find_one({
-        "id": {"$ne": current_user["id"]},
-        "couple_id": {"$exists": False}
+    # Find pending pairing request by code
+    existing_pairing = await db.pairing_requests.find_one({
+        "pairing_code": request.pairing_code,
+        "user_id": {"$ne": current_user["id"]},
+        "used": False
     })
     
+    if not existing_pairing:
+        # Create new pairing request
+        pairing_request = {
+            "id": str(uuid.uuid4()),
+            "user_id": current_user["id"],
+            "pairing_code": request.pairing_code,
+            "used": False,
+            "created_at": datetime.utcnow()
+        }
+        await db.pairing_requests.insert_one(pairing_request)
+        return {"message": "Pairing request created. Waiting for partner to join.", "pairing_code": request.pairing_code}
+    
+    # Found matching pairing request - link partners
+    partner = await db.users.find_one({"id": existing_pairing["user_id"]})
     if not partner:
-        raise HTTPException(status_code=404, detail="Partner not found or already linked")
+        raise HTTPException(status_code=404, detail="Partner not found")
+    
+    if partner.get("couple_id"):
+        raise HTTPException(status_code=400, detail="Partner already linked with someone else")
     
     # Create couple
     couple = Couple(
-        user1_id=current_user["id"],
-        user2_id=partner["id"],
+        user1_id=partner["id"],
+        user2_id=current_user["id"],
         pairing_code=request.pairing_code
     )
     
@@ -309,6 +327,12 @@ async def link_with_partner(request: PairingRequest, current_user: dict = Depend
     await db.users.update_one(
         {"id": partner["id"]},
         {"$set": {"couple_id": couple.id}}
+    )
+    
+    # Mark pairing request as used
+    await db.pairing_requests.update_one(
+        {"id": existing_pairing["id"]},
+        {"$set": {"used": True}}
     )
     
     return {"message": "Successfully linked with partner", "couple_id": couple.id}
