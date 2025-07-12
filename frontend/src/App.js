@@ -644,7 +644,7 @@ const PairingScreen = ({ user }) => {
     e.preventDefault();
     
     if (pairingCode.length !== 6) {
-      setError('Please enter a complete 6-digit code');
+      setError('Please enter a complete 6-character code');
       return;
     }
 
