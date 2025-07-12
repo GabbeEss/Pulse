@@ -159,6 +159,7 @@ const NotificationToast = ({ notification, onDismiss }) => {
 const CountdownTimer = ({ expiresAt, onExpired }) => {
   const [timeLeft, setTimeLeft] = useState('');
   const [isExpired, setIsExpired] = useState(false);
+  const [progress, setProgress] = useState(100);
 
   useEffect(() => {
     const updateTimer = () => {
@@ -169,6 +170,7 @@ const CountdownTimer = ({ expiresAt, onExpired }) => {
       if (diff <= 0) {
         setTimeLeft('Expired');
         setIsExpired(true);
+        setProgress(0);
         if (onExpired) onExpired();
         return;
       }
@@ -177,12 +179,16 @@ const CountdownTimer = ({ expiresAt, onExpired }) => {
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
       
+      // Calculate progress (assuming typical task duration of 4 hours max)
+      const totalDuration = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
+      const elapsed = totalDuration - diff;
+      const progressPercent = Math.max(0, Math.min(100, (elapsed / totalDuration) * 100));
+      setProgress(100 - progressPercent);
+      
       if (hours > 0) {
-        setTimeLeft(`${hours}h ${minutes}m`);
-      } else if (minutes > 0) {
-        setTimeLeft(`${minutes}m ${seconds}s`);
+        setTimeLeft(`${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
       } else {
-        setTimeLeft(`${seconds}s`);
+        setTimeLeft(`${minutes}:${seconds.toString().padStart(2, '0')}`);
       }
       
       setIsExpired(false);
@@ -190,17 +196,71 @@ const CountdownTimer = ({ expiresAt, onExpired }) => {
 
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
+    
     return () => clearInterval(interval);
   }, [expiresAt, onExpired]);
 
+  const getUrgencyColor = () => {
+    if (isExpired) return 'text-red-400';
+    if (progress < 25) return 'text-red-400';
+    if (progress < 50) return 'text-yellow-400';
+    return 'text-green-400';
+  };
+
+  const getProgressColor = () => {
+    if (isExpired) return 'bg-red-500';
+    if (progress < 25) return 'bg-red-500';
+    if (progress < 50) return 'bg-yellow-500';
+    return 'bg-green-500';
+  };
+
   return (
-    <span className={`text-sm font-mono ${
-      isExpired ? 'text-red-400' : 
-      timeLeft.includes('s') && !timeLeft.includes('m') ? 'text-yellow-400' :
-      'text-gray-400'
-    }`}>
-      {timeLeft}
-    </span>
+    <div className="flex items-center gap-2">
+      {/* Circular Progress Indicator */}
+      <div className="relative w-8 h-8">
+        <svg className="w-8 h-8 transform -rotate-90" viewBox="0 0 32 32">
+          {/* Background circle */}
+          <circle
+            cx="16"
+            cy="16"
+            r="14"
+            stroke="currentColor"
+            strokeWidth="2"
+            fill="transparent"
+            className="text-gray-600"
+          />
+          {/* Progress circle */}
+          <circle
+            cx="16"
+            cy="16"
+            r="14"
+            stroke="currentColor"
+            strokeWidth="2"
+            fill="transparent"
+            strokeDasharray={`${2 * Math.PI * 14}`}
+            strokeDashoffset={`${2 * Math.PI * 14 * (1 - progress / 100)}`}
+            className={`transition-all duration-1000 ${getProgressColor()}`}
+            strokeLinecap="round"
+          />
+        </svg>
+        {/* Timer icon in center */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className={`text-xs ${getUrgencyColor()}`}>
+            {isExpired ? '⏰' : '⏱️'}
+          </span>
+        </div>
+      </div>
+      
+      {/* Time display */}
+      <div className="flex flex-col">
+        <span className={`text-sm font-mono font-semibold ${getUrgencyColor()}`}>
+          {timeLeft}
+        </span>
+        <span className="text-xs text-gray-400">
+          {isExpired ? 'Task expired' : 'Time left'}
+        </span>
+      </div>
+    </div>
   );
 };
 
