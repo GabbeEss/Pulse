@@ -6,7 +6,7 @@ Quick test for unauthorized access
 import requests
 
 def test_unauthorized():
-    base_url = "https://ab68f583-e369-494f-b7f6-93bb401f8c1b.preview.emergentagent.com"
+    base_url = "https://760db4b3-114c-412c-a5f7-52f931b271ed.preview.emergentagent.com"
     api_url = f"{base_url}/api"
     
     # Test unauthorized access to tasks endpoint

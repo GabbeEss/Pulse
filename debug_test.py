@@ -8,7 +8,7 @@ import json
 from datetime import datetime
 
 # Test configuration
-BASE_URL = "https://ab68f583-e369-494f-b7f6-93bb401f8c1b.preview.emergentagent.com"
+BASE_URL = "https://760db4b3-114c-412c-a5f7-52f931b271ed.preview.emergentagent.com"
 API_URL = f"{BASE_URL}/api"
 
 def test_endpoint(method, endpoint, data=None, token=None, expected_status=200):

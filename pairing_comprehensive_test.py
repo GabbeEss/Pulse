@@ -10,7 +10,7 @@ import time
 
 class PairingSystemTester:
     def __init__(self):
-        self.base_url = "https://ab68f583-e369-494f-b7f6-93bb401f8c1b.preview.emergentagent.com"
+        self.base_url = "https://760db4b3-114c-412c-a5f7-52f931b271ed.preview.emergentagent.com"
         self.api_url = f"{self.base_url}/api"
         self.tests_passed = 0
         self.tests_total = 0
