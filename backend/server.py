@@ -234,9 +234,6 @@ async def register(user: UserCreate):
     
     await db.users.insert_one(user_obj.dict())
     
-    # Generate pairing code
-    pairing_code = generate_pairing_code()
-    
     # Create token
     access_token = create_access_token(data={"sub": user_obj.id})
     
@@ -247,8 +244,7 @@ async def register(user: UserCreate):
             "id": user_obj.id,
             "email": user_obj.email,
             "name": user_obj.name,
-            "couple_id": user_obj.couple_id,
-            "pairing_code": pairing_code
+            "couple_id": user_obj.couple_id
         }
     }
 
@@ -260,11 +256,6 @@ async def login(user: UserLogin):
     
     access_token = create_access_token(data={"sub": db_user["id"]})
     
-    # Get pairing code if not coupled
-    pairing_code = None
-    if not db_user.get("couple_id"):
-        pairing_code = generate_pairing_code()
-    
     return {
         "access_token": access_token,
         "token_type": "bearer",
@@ -272,8 +263,7 @@ async def login(user: UserLogin):
             "id": db_user["id"],
             "email": db_user["email"],
             "name": db_user["name"],
-            "couple_id": db_user.get("couple_id"),
-            "pairing_code": pairing_code
+            "couple_id": db_user.get("couple_id")
         }
     }
 
