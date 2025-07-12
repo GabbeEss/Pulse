@@ -128,6 +128,7 @@ class MoodCreate(BaseModel):
     mood_type: str
     intensity: int
     duration_minutes: int = 60
+    is_extreme_mode: bool = False
 
 class Task(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
