@@ -1284,7 +1284,13 @@ const TaskCard = ({ task, currentUser, onProofSubmit, onTaskApprove, onRefresh }
         <p className="text-gray-300 mb-4 leading-relaxed">{task.description}</p>
         
         {task.reward && (
-          <p className="text-pink-400 mb-3">🎁 Reward: {task.reward}</p>
+          <div className="mb-4 p-3 bg-gradient-to-r from-pink-500/10 to-purple-500/10 rounded-xl border border-pink-400/20">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-pink-400">🎁</span>
+              <span className="text-xs font-semibold text-pink-400 uppercase tracking-wide">Reward</span>
+            </div>
+            <p className="text-white font-medium">{task.reward}</p>
+          </div>
         )}
 
         <div className="flex items-center justify-between mb-4">
