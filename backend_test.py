@@ -209,45 +209,215 @@ class PulseAPITester:
         else:
             self.log_test("Mood retrieval", False, str(response))
 
-    def test_task_system(self):
-        """Test HeatTask system"""
-        print("\n🔍 Testing HeatTask System...")
+    def test_enhanced_task_system(self):
+        """Test Enhanced HeatTask system with token rewards and approval workflow"""
+        print("\n🔍 Testing Enhanced HeatTask System...")
         
         if not self.user1_token or not self.couple_id:
-            self.log_test("Task system", False, "Missing prerequisites")
+            self.log_test("Enhanced task system", False, "Missing prerequisites")
             return False
 
-        # Test task creation
+        # Test 1: Task creation with token rewards
         task_data = {
-            "title": "Test Heat Task",
-            "description": "This is a test task for the couple",
-            "reward": "A nice massage",
-            "duration_minutes": 90
+            "title": "Romantic Dinner Setup",
+            "description": "Prepare a candlelit dinner with wine and music",
+            "reward": "A relaxing massage",
+            "duration_minutes": 90,
+            "tokens_earned": 10
         }
         success, response = self.make_request('POST', 'tasks', task_data, self.user1_token, expected_status=200)
         task_id = None
         if success:
             task_id = response.get('id')
-            self.log_test("Task creation", task_id is not None)
+            tokens_earned = response.get('tokens_earned', 0)
+            self.log_test("Task creation with token rewards", task_id is not None and tokens_earned == 10)
         else:
-            self.log_test("Task creation", False, str(response))
+            self.log_test("Task creation with token rewards", False, str(response))
+            return False
 
-        # Test task retrieval
+        # Test 2: Active tasks with countdown
+        success, response = self.make_request('GET', 'tasks/active', token=self.user2_token, expected_status=200)
+        if success:
+            active_tasks = response if isinstance(response, list) else []
+            has_countdown = any('time_remaining_minutes' in task for task in active_tasks)
+            self.log_test("Active tasks with countdown", len(active_tasks) > 0 and has_countdown)
+        else:
+            self.log_test("Active tasks with countdown", False, str(response))
+
+        # Test 3: Task status details
+        if task_id:
+            success, response = self.make_request('GET', f'tasks/{task_id}/status', token=self.user2_token, expected_status=200)
+            if success:
+                has_task_details = 'task' in response
+                has_time_remaining = 'time_remaining_minutes' in response
+                has_permissions = 'can_submit_proof' in response and 'can_approve' in response
+                self.log_test("Task status details", has_task_details and has_time_remaining and has_permissions)
+            else:
+                self.log_test("Task status details", False, str(response))
+
+        # Test 4: Photo proof submission with base64
+        if task_id:
+            # Simulate base64 encoded image
+            fake_base64_image = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+            
+            proof_data = {
+                "proof_text": "Task completed! Here's the romantic dinner setup.",
+                "proof_photo_base64": fake_base64_image
+            }
+            success, response = self.make_request('PATCH', f'tasks/{task_id}/proof', proof_data, self.user2_token, expected_status=200)
+            self.log_test("Photo proof submission (base64)", success, str(response) if not success else "")
+
+            # Test 5: Task approval workflow
+            if success:
+                # Test approval
+                approval_data = {
+                    "approved": True,
+                    "message": "Great job! The dinner looks amazing."
+                }
+                success, response = self.make_request('PATCH', f'tasks/{task_id}/approve', approval_data, self.user1_token, expected_status=200)
+                if success:
+                    tokens_awarded = response.get('tokens_awarded', 0)
+                    self.log_test("Task approval with token award", tokens_awarded == 10)
+                else:
+                    self.log_test("Task approval with token award", False, str(response))
+
+        # Test 6: Task rejection workflow
+        # Create another task for rejection test
+        task_data_2 = {
+            "title": "Quick Cleanup Task",
+            "description": "Tidy up the living room",
+            "duration_minutes": 30,
+            "tokens_earned": 5
+        }
+        success, response = self.make_request('POST', 'tasks', task_data_2, self.user1_token, expected_status=200)
+        if success:
+            task_id_2 = response.get('id')
+            
+            # Submit proof
+            proof_data_2 = {
+                "proof_text": "Cleaned up the room"
+            }
+            success, response = self.make_request('PATCH', f'tasks/{task_id_2}/proof', proof_data_2, self.user2_token, expected_status=200)
+            
+            if success:
+                # Reject the task
+                rejection_data = {
+                    "approved": False,
+                    "message": "Please clean more thoroughly"
+                }
+                success, response = self.make_request('PATCH', f'tasks/{task_id_2}/approve', rejection_data, self.user1_token, expected_status=200)
+                self.log_test("Task rejection workflow", success, str(response) if not success else "")
+
+        # Test 7: Task expiration management
+        success, response = self.make_request('POST', 'tasks/check-expiry', token=self.user1_token, expected_status=200)
+        if success:
+            expired_count = response.get('expired_count', 0)
+            self.log_test("Task expiration check", 'expired_count' in response)
+        else:
+            self.log_test("Task expiration check", False, str(response))
+
+        # Test 8: All tasks retrieval
         success, response = self.make_request('GET', 'tasks', token=self.user1_token, expected_status=200)
         if success:
             tasks = response if isinstance(response, list) else []
-            self.log_test("Task retrieval", len(tasks) > 0)
+            self.log_test("All tasks retrieval", len(tasks) >= 2)  # Should have at least our 2 test tasks
         else:
-            self.log_test("Task retrieval", False, str(response))
+            self.log_test("All tasks retrieval", False, str(response))
 
-        # Test task proof submission (if we have a task ID)
-        if task_id:
-            proof_data = {
-                "proof_text": "Task completed successfully!",
-                "proof_url": "https://example.com/proof.jpg"
+        return task_id
+
+    def test_token_reward_system(self):
+        """Test Token/Reward Bank System"""
+        print("\n🔍 Testing Token/Reward Bank System...")
+        
+        if not self.user1_token or not self.couple_id:
+            self.log_test("Token/Reward system", False, "Missing prerequisites")
+            return False
+
+        # Test 1: User token balance
+        success, response = self.make_request('GET', 'tokens', token=self.user2_token, expected_status=200)
+        if success:
+            has_tokens = 'tokens' in response
+            has_lifetime = 'lifetime_tokens' in response
+            self.log_test("User token balance endpoint", has_tokens and has_lifetime)
+            user2_tokens = response.get('tokens', 0)
+        else:
+            self.log_test("User token balance endpoint", False, str(response))
+            user2_tokens = 0
+
+        # Test 2: Couple token info
+        success, response = self.make_request('GET', 'couple/tokens', token=self.user1_token, expected_status=200)
+        if success:
+            has_your_tokens = 'your_tokens' in response
+            has_partner_tokens = 'partner_tokens' in response
+            has_partner_name = 'partner_name' in response
+            self.log_test("Couple token info", has_your_tokens and has_partner_tokens and has_partner_name)
+        else:
+            self.log_test("Couple token info", False, str(response))
+
+        # Test 3: Reward creation
+        reward_data = {
+            "title": "Movie Night Date",
+            "description": "Choose the movie and prepare snacks for a cozy night in",
+            "tokens_cost": 15
+        }
+        success, response = self.make_request('POST', 'rewards', reward_data, self.user1_token, expected_status=200)
+        reward_id = None
+        if success:
+            reward_id = response.get('id')
+            tokens_cost = response.get('tokens_cost', 0)
+            self.log_test("Reward creation", reward_id is not None and tokens_cost == 15)
+        else:
+            self.log_test("Reward creation", False, str(response))
+
+        # Test 4: Reward listing
+        success, response = self.make_request('GET', 'rewards', token=self.user2_token, expected_status=200)
+        if success:
+            rewards = response if isinstance(response, list) else []
+            self.log_test("Reward listing", len(rewards) > 0)
+        else:
+            self.log_test("Reward listing", False, str(response))
+
+        # Test 5: Reward redemption (if user has enough tokens)
+        if reward_id and user2_tokens >= 15:
+            redeem_data = {
+                "reward_id": reward_id
             }
-            success, response = self.make_request('PATCH', f'tasks/{task_id}/proof', proof_data, self.user2_token, expected_status=200)
-            self.log_test("Task proof submission", success, str(response) if not success else "")
+            success, response = self.make_request('POST', 'rewards/redeem', redeem_data, self.user2_token, expected_status=200)
+            if success:
+                tokens_spent = response.get('tokens_spent', 0)
+                new_balance = response.get('new_balance', 0)
+                self.log_test("Reward redemption with sufficient tokens", tokens_spent == 15)
+            else:
+                self.log_test("Reward redemption with sufficient tokens", False, str(response))
+        else:
+            # Test insufficient tokens scenario
+            if reward_id:
+                redeem_data = {
+                    "reward_id": reward_id
+                }
+                success, response = self.make_request('POST', 'rewards/redeem', redeem_data, self.user2_token, expected_status=400)
+                self.log_test("Reward redemption with insufficient tokens", success, "Should fail with 400 status")
+
+        # Test 6: Create a cheaper reward for testing redemption
+        cheap_reward_data = {
+            "title": "Choose Tonight's Dinner",
+            "description": "Pick what we're having for dinner tonight",
+            "tokens_cost": 5
+        }
+        success, response = self.make_request('POST', 'rewards', cheap_reward_data, self.user1_token, expected_status=200)
+        if success:
+            cheap_reward_id = response.get('id')
+            
+            # Try to redeem the cheaper reward
+            if cheap_reward_id:
+                redeem_data = {
+                    "reward_id": cheap_reward_id
+                }
+                success, response = self.make_request('POST', 'rewards/redeem', redeem_data, self.user2_token, expected_status=200)
+                self.log_test("Cheap reward redemption", success, str(response) if not success else "")
+
+        return True
 
     def test_ai_suggestions(self):
         """Test AI suggestion system comprehensively"""
