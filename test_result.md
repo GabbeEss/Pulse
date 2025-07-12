@@ -220,9 +220,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Enhanced HeatTask System - Backend Models and API"
-    - "Token/Reward Bank System - Backend"
-    - "Real-time Notifications - WebSocket Enhancement"
+    - "Enhanced HeatTask UI - Countdown Timers and Proof Submission"
+    - "Token Bank and Rewards UI"
+    - "Enhanced Real-time Notifications - Frontend"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
