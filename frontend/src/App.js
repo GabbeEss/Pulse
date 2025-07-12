@@ -189,9 +189,39 @@ const LoginForm = () => {
 
 const PairingScreen = ({ user }) => {
   const [pairingCode, setPairingCode] = useState('');
+  const [myPairingCode, setMyPairingCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [generatingCode, setGeneratingCode] = useState(false);
   const { login } = useAuth();
+
+  useEffect(() => {
+    // Get or generate pairing code when component mounts
+    getPairingCode();
+  }, []);
+
+  const getPairingCode = async () => {
+    try {
+      const response = await axios.get(`${API}/pairing/code`);
+      setMyPairingCode(response.data.pairing_code);
+    } catch (error) {
+      console.error('Error getting pairing code:', error);
+      generateNewCode();
+    }
+  };
+
+  const generateNewCode = async () => {
+    setGeneratingCode(true);
+    try {
+      const response = await axios.post(`${API}/pairing/generate`);
+      setMyPairingCode(response.data.pairing_code);
+    } catch (error) {
+      console.error('Error generating pairing code:', error);
+      setError('Failed to generate pairing code');
+    } finally {
+      setGeneratingCode(false);
+    }
+  };
 
   const handlePair = async (e) => {
     e.preventDefault();
@@ -199,9 +229,15 @@ const PairingScreen = ({ user }) => {
     setLoading(true);
 
     try {
-      await axios.post(`${API}/pairing/link`, { pairing_code: pairingCode });
-      // Refresh user data
-      window.location.reload();
+      const response = await axios.post(`${API}/pairing/link`, { pairing_code: pairingCode });
+      
+      if (response.data.couple_id) {
+        // Successfully linked - reload page to update user data
+        window.location.reload();
+      } else {
+        // Pairing request created, waiting for partner
+        setError('Pairing request sent! Waiting for your partner to join...');
+      }
     } catch (error) {
       setError(error.response?.data?.detail || 'Pairing failed');
     } finally {
@@ -221,10 +257,19 @@ const PairingScreen = ({ user }) => {
           <label className="block text-gray-300 mb-2">Your Pairing Code:</label>
           <div className="bg-white/10 border border-white/20 rounded-xl p-4 text-center">
             <span className="text-3xl font-mono text-white tracking-wider">
-              {user.pairing_code || '------'}
+              {myPairingCode || '------'}
             </span>
           </div>
-          <p className="text-sm text-gray-400 mt-2">Share this code with your partner</p>
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-sm text-gray-400">Share this code with your partner</p>
+            <button
+              onClick={generateNewCode}
+              disabled={generatingCode}
+              className="text-sm text-pink-400 hover:text-pink-300 disabled:opacity-50"
+            >
+              {generatingCode ? 'Generating...' : 'New Code'}
+            </button>
+          </div>
         </div>
 
         <form onSubmit={handlePair} className="space-y-6">
@@ -241,7 +286,11 @@ const PairingScreen = ({ user }) => {
           </div>
 
           {error && (
-            <div className="text-red-400 text-sm text-center">{error}</div>
+            <div className={`text-sm text-center p-3 rounded-xl ${
+              error.includes('Waiting') ? 'bg-blue-500/20 text-blue-400' : 'bg-red-500/20 text-red-400'
+            }`}>
+              {error}
+            </div>
           )}
 
           <button
