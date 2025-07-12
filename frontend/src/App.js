@@ -598,12 +598,18 @@ const PairingScreen = ({ user }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [generatingCode, setGeneratingCode] = useState(false);
+  const [debugInfo, setDebugInfo] = useState(''); // For debugging
   const { login } = useAuth();
 
   useEffect(() => {
     // Get or generate pairing code when component mounts
     getPairingCode();
   }, []);
+
+  // Debug the pairing code state
+  useEffect(() => {
+    setDebugInfo(`Code length: ${pairingCode.length}, Valid: ${pairingCode.length === 6}, Code: "${pairingCode}"`);
+  }, [pairingCode]);
 
   const getPairingCode = async () => {
     try {
@@ -628,38 +634,69 @@ const PairingScreen = ({ user }) => {
     }
   };
 
+  const handlePairingCodeChange = (e) => {
+    const value = e.target.value;
+    // Only allow digits and limit to 6 characters
+    const cleanedValue = value.replace(/\D/g, '').slice(0, 6);
+    setPairingCode(cleanedValue);
+    
+    // Clear any previous errors when user starts typing
+    if (error && !error.includes('Waiting')) {
+      setError('');
+    }
+  };
+
   const handlePair = async (e) => {
     e.preventDefault();
+    
+    if (pairingCode.length !== 6) {
+      setError('Please enter a complete 6-digit code');
+      return;
+    }
+
     setError('');
     setLoading(true);
 
     try {
+      console.log('Attempting to pair with code:', pairingCode);
       const response = await axios.post(`${API}/pairing/link`, { pairing_code: pairingCode });
+      
+      console.log('Pairing response:', response.data);
       
       if (response.data.couple_id) {
         // Successfully linked - reload page to update user data
-        window.location.reload();
+        setError('Success! Linking with partner...');
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
         // Pairing request created, waiting for partner
         setError('Pairing request sent! Waiting for your partner to join...');
       }
     } catch (error) {
-      setError(error.response?.data?.detail || 'Pairing failed');
+      console.error('Pairing error:', error);
+      const errorMessage = error.response?.data?.detail || 'Pairing failed. Please check the code and try again.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
+  const isButtonDisabled = loading || pairingCode.length !== 6;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-pink-900 to-red-900 flex items-center justify-center p-4">
       <div className="bg-black/20 backdrop-blur-lg rounded-3xl p-8 w-full max-w-md border border-white/10">
+        {/* Enhanced Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">👫 Link with Partner</h1>
-          <p className="text-gray-300">Share your code or enter theirs</p>
+          <p className="text-gray-300">Share your code or enter theirs to connect</p>
+          <p className="text-xs text-gray-400 mt-2">You'll be able to create tasks and share moods together</p>
         </div>
 
+        {/* Your Pairing Code Section */}
         <div className="mb-8">
-          <label className="block text-gray-300 mb-2">Your Pairing Code:</label>
+          <label className="block text-gray-300 mb-2 font-semibold">Your Pairing Code:</label>
           <div className="bg-white/10 border border-white/20 rounded-xl p-4 text-center">
             <span className="text-3xl font-mono text-white tracking-wider">
               {myPairingCode || '------'}
@@ -670,42 +707,82 @@ const PairingScreen = ({ user }) => {
             <button
               onClick={generateNewCode}
               disabled={generatingCode}
-              className="text-sm text-pink-400 hover:text-pink-300 disabled:opacity-50"
+              className="text-sm text-pink-400 hover:text-pink-300 disabled:opacity-50 underline"
             >
               {generatingCode ? 'Generating...' : 'New Code'}
             </button>
           </div>
         </div>
 
+        {/* Partner's Code Input Section */}
         <form onSubmit={handlePair} className="space-y-6">
           <div>
-            <label className="block text-gray-300 mb-2">Partner's Code:</label>
+            <label className="block text-gray-300 mb-2 font-semibold">Partner's Code:</label>
             <input
               type="text"
               placeholder="Enter 6-digit code"
               value={pairingCode}
-              onChange={(e) => setPairingCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              onChange={handlePairingCodeChange}
               className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 text-center text-xl font-mono tracking-wider"
               maxLength="6"
+              autoComplete="off"
             />
+            {/* Debug info - remove this in production */}
+            <p className="text-xs text-gray-500 mt-1">{debugInfo}</p>
           </div>
 
           {error && (
             <div className={`text-sm text-center p-3 rounded-xl ${
-              error.includes('Waiting') ? 'bg-blue-500/20 text-blue-400' : 'bg-red-500/20 text-red-400'
+              error.includes('Waiting') || error.includes('Success') ? 'bg-blue-500/20 text-blue-400' : 
+              error.includes('Success') ? 'bg-green-500/20 text-green-400' :
+              'bg-red-500/20 text-red-400'
             }`}>
               {error}
             </div>
           )}
 
+          {/* Enhanced Submit Button */}
           <button
             type="submit"
-            disabled={loading || pairingCode.length !== 6}
-            className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+            disabled={isButtonDisabled}
+            className={`w-full py-3 rounded-xl font-semibold transition-all duration-200 ${
+              isButtonDisabled
+                ? 'bg-gray-500/20 text-gray-400 cursor-not-allowed'
+                : 'bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:opacity-90 hover:scale-[1.02]'
+            }`}
           >
-            {loading ? 'Linking...' : 'Link with Partner'}
+            {loading ? (
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                Linking...
+              </div>
+            ) : (
+              `Link with Partner ${pairingCode.length === 6 ? '✨' : `(${6 - pairingCode.length} digits needed)`}`
+            )}
           </button>
+
+          {/* Helper Text */}
+          <div className="text-center">
+            <p className="text-xs text-gray-400">
+              Enter your partner's 6-digit code to link your accounts and start sharing intimate moments together.
+            </p>
+          </div>
         </form>
+
+        {/* Enhanced Logout Button */}
+        <div className="mt-8 pt-6 border-t border-white/10">
+          <button
+            onClick={() => {
+              // Clear token and reload to go back to login
+              localStorage.removeItem('token');
+              window.location.reload();
+            }}
+            className="w-full flex items-center justify-center gap-2 py-2 text-gray-400 hover:text-white transition-colors"
+          >
+            <span>🚪</span>
+            <span className="text-sm">Switch Account</span>
+          </button>
+        </div>
       </div>
     </div>
   );
