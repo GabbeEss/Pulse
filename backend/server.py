@@ -1116,6 +1116,33 @@ async def check_task_expiry(current_user: dict = Depends(get_current_user)):
     
     return {"expired_count": expired_count}
 
+@api_router.delete("/tasks/{task_id}")
+async def delete_task(task_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete a task (only task creator can delete)"""
+    task = await db.tasks.find_one({"id": task_id}, {"_id": 0})
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    if task["creator_id"] != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Only the task creator can delete this task")
+    
+    # Delete the task
+    result = await db.tasks.delete_one({"id": task_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    # Send notification to partner if task was pending/completed
+    if task["status"] in ["pending", "completed"]:
+        await manager.send_to_partner(current_user["id"], {
+            "type": "task_deleted",
+            "task_id": task_id,
+            "task_title": task["title"],
+            "message": f"Task deleted: {task['title']}"
+        })
+    
+    return {"message": "Task deleted successfully"}
+
 # Enhanced task status endpoint
 @api_router.get("/tasks/{task_id}/status")
 async def get_task_status(task_id: str, current_user: dict = Depends(get_current_user)):
