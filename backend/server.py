@@ -1026,9 +1026,9 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
 
 # AI suggestion endpoint
 @api_router.post("/ai/suggest-task")
-async def suggest_task(mood_type: str, intensity: int, current_user: dict = Depends(get_current_user)):
+async def suggest_task(mood_type: str, intensity: int, is_extreme_mode: bool = False, current_user: dict = Depends(get_current_user)):
     boundaries = current_user.get("boundaries", [])
-    suggestion = await get_ai_suggestion(mood_type, intensity, boundaries)
+    suggestion = await get_ai_suggestion(mood_type, intensity, boundaries, is_extreme_mode)
     return suggestion
 
 # Test endpoints
