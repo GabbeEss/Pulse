@@ -598,7 +598,6 @@ const PairingScreen = ({ user }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [generatingCode, setGeneratingCode] = useState(false);
-  const [debugInfo, setDebugInfo] = useState(''); // For debugging
   const { login } = useAuth();
 
   useEffect(() => {
