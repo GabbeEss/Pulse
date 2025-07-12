@@ -102,7 +102,200 @@ const useWebSocket = (userId) => {
   return { socket, messages, notifications, dismissNotification };
 };
 
-// Components
+// Enhanced Components
+
+// Notification Toast Component
+const NotificationToast = ({ notification, onDismiss }) => {
+  const getTypeColor = (type) => {
+    switch (type) {
+      case 'new_task': return 'from-purple-500 to-pink-500';
+      case 'task_completed': return 'from-blue-500 to-purple-500';
+      case 'task_approved': return 'from-green-500 to-blue-500';
+      case 'task_rejected': return 'from-red-500 to-orange-500';
+      case 'task_expired': return 'from-gray-500 to-red-500';
+      case 'new_reward': return 'from-yellow-500 to-orange-500';
+      case 'reward_redeemed': return 'from-pink-500 to-purple-500';
+      default: return 'from-gray-500 to-gray-600';
+    }
+  };
+
+  const getTypeEmoji = (type) => {
+    switch (type) {
+      case 'new_task': return '🎯';
+      case 'task_completed': return '✅';
+      case 'task_approved': return '🎉';
+      case 'task_rejected': return '❌';
+      case 'task_expired': return '⏰';
+      case 'new_reward': return '🎁';
+      case 'reward_redeemed': return '💎';
+      default: return '📢';
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => onDismiss(notification.id), 5000);
+    return () => clearTimeout(timer);
+  }, [notification.id, onDismiss]);
+
+  return (
+    <div className={`mb-2 p-3 rounded-xl bg-gradient-to-r ${getTypeColor(notification.type)} text-white shadow-lg animate-fade-in`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">{getTypeEmoji(notification.type)}</span>
+          <span className="text-sm font-medium">{notification.message}</span>
+        </div>
+        <button 
+          onClick={() => onDismiss(notification.id)}
+          className="text-white/80 hover:text-white ml-2"
+        >
+          ×
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Countdown Timer Component
+const CountdownTimer = ({ expiresAt, onExpired }) => {
+  const [timeLeft, setTimeLeft] = useState('');
+  const [isExpired, setIsExpired] = useState(false);
+
+  useEffect(() => {
+    const updateTimer = () => {
+      const now = new Date();
+      const expires = new Date(expiresAt);
+      const diff = expires - now;
+      
+      if (diff <= 0) {
+        setTimeLeft('Expired');
+        setIsExpired(true);
+        if (onExpired) onExpired();
+        return;
+      }
+      
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      if (hours > 0) {
+        setTimeLeft(`${hours}h ${minutes}m`);
+      } else if (minutes > 0) {
+        setTimeLeft(`${minutes}m ${seconds}s`);
+      } else {
+        setTimeLeft(`${seconds}s`);
+      }
+      
+      setIsExpired(false);
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [expiresAt, onExpired]);
+
+  return (
+    <span className={`text-sm font-mono ${
+      isExpired ? 'text-red-400' : 
+      timeLeft.includes('s') && !timeLeft.includes('m') ? 'text-yellow-400' :
+      'text-gray-400'
+    }`}>
+      {timeLeft}
+    </span>
+  );
+};
+
+// Photo Upload Component
+const PhotoUpload = ({ onPhotoSelected, existingPhoto }) => {
+  const [preview, setPreview] = useState(existingPhoto || null);
+  const fileInputRef = useRef(null);
+
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64String = e.target.result;
+        setPreview(base64String);
+        onPhotoSelected(base64String);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removePhoto = () => {
+    setPreview(null);
+    onPhotoSelected(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+      
+      {preview ? (
+        <div className="relative">
+          <img 
+            src={preview} 
+            alt="Proof preview" 
+            className="w-full h-48 object-cover rounded-xl"
+          />
+          <button
+            onClick={removePhoto}
+            className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+          >
+            ×
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="w-full h-48 border-2 border-dashed border-white/20 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:border-pink-500 hover:text-pink-500 transition-colors"
+        >
+          <span className="text-4xl mb-2">📸</span>
+          <span>Tap to add photo proof</span>
+          <span className="text-xs mt-1">Max 5MB</span>
+        </button>
+      )}
+    </div>
+  );
+};
+
+// Token Display Component
+const TokenDisplay = ({ tokens, lifetimeTokens, size = "normal" }) => {
+  const sizeClasses = {
+    small: "text-sm",
+    normal: "text-lg",
+    large: "text-2xl"
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-yellow-400">🪙</span>
+      <span className={`font-bold text-yellow-400 ${sizeClasses[size]}`}>
+        {tokens || 0}
+      </span>
+      {lifetimeTokens !== undefined && (
+        <span className="text-xs text-gray-400">
+          ({lifetimeTokens} lifetime)
+        </span>
+      )}
+    </div>
+  );
+};
 const LoginForm = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
