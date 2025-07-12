@@ -422,67 +422,164 @@ def get_mock_ai_suggestion(mood_type: str, intensity: int, boundaries: List[str]
     """
     Enhanced fallback mock suggestions with mood-specific content
     """
-    regular_suggestions = [
-        {
-            "title": "Cook together with a twist",
-            "description": "Prepare dinner while sending cute messages to each other throughout.",
-            "default_duration_minutes": 60
-        },
-        {
-            "title": "Sensual massage time",
-            "description": "Give your partner a 15-minute massage and take a photo of the setup.",
-            "default_duration_minutes": 45
-        },
-        {
-            "title": "Send a flirty voice message",
-            "description": "Record a sweet message telling your partner what you love about them.",
-            "default_duration_minutes": 30
-        }
-    ]
+    # Mood-specific suggestion mapping
+    mood_specific_suggestions = {
+        'available_for_use': [
+            {
+                "title": "Free Use Morning",
+                "description": "For the next hour, you're available for your partner's pleasure whenever they want. Stay accessible and ready.",
+                "default_duration_minutes": 60
+            },
+            {
+                "title": "Use Me as You Please",
+                "description": "Tell your partner they can use you however they want for the next 30 minutes. Submit to their desires.",
+                "default_duration_minutes": 30
+            }
+        ],
+        'feeling_submissive': [
+            {
+                "title": "Serve Your Dominant",
+                "description": "Ask your partner what they need and fulfill their request immediately. Focus on pleasing them.",
+                "default_duration_minutes": 45
+            },
+            {
+                "title": "Submission Position",
+                "description": "Get into a submissive position and wait for your partner's commands. Show your obedience.",
+                "default_duration_minutes": 30
+            }
+        ],
+        'wanna_edge': [
+            {
+                "title": "Edge Without Release",
+                "description": "Bring yourself close to climax 3 times but don't finish. Send updates to your partner.",
+                "default_duration_minutes": 45
+            },
+            {
+                "title": "Teasing Touch",
+                "description": "Touch yourself slowly and stop every time you get close. Build the tension for your partner.",
+                "default_duration_minutes": 60
+            }
+        ],
+        'use_me_how_you_want': [
+            {
+                "title": "Total Control Surrender",
+                "description": "Text your partner that they have complete control over you for the next hour. Do whatever they say.",
+                "default_duration_minutes": 60
+            },
+            {
+                "title": "Your Pleasure Toy",
+                "description": "Tell your partner you're their personal pleasure toy today. Let them decide how to use you.",
+                "default_duration_minutes": 90
+            }
+        ],
+        'feeling_dominant': [
+            {
+                "title": "Command Your Submissive",
+                "description": "Give your partner 3 tasks to complete for your pleasure. Make them report back when done.",
+                "default_duration_minutes": 60
+            },
+            {
+                "title": "Take Complete Control",
+                "description": "Direct your partner's every move for the next 30 minutes. Be commanding and assertive.",
+                "default_duration_minutes": 30
+            }
+        ],
+        'need_attention': [
+            {
+                "title": "Worship and Adore",
+                "description": "Have your partner tell you 5 things they love about your body while touching you gently.",
+                "default_duration_minutes": 30
+            },
+            {
+                "title": "Focus All on You",
+                "description": "Ask your partner to spend 20 minutes focusing entirely on your pleasure and desires.",
+                "default_duration_minutes": 20
+            }
+        ],
+        'bratty_mood': [
+            {
+                "title": "Tame the Brat",
+                "description": "Be extra demanding and see how your partner handles your bratty attitude. Push their buttons playfully.",
+                "default_duration_minutes": 45
+            },
+            {
+                "title": "Playful Punishment",
+                "description": "Act bratty until your partner gives you a playful punishment or puts you in your place.",
+                "default_duration_minutes": 30
+            }
+        ],
+        'worship_me': [
+            {
+                "title": "Royal Treatment",
+                "description": "Have your partner treat you like royalty - massage, compliments, and total attention to your needs.",
+                "default_duration_minutes": 60
+            },
+            {
+                "title": "Goddess Worship",
+                "description": "Make your partner worship your body with kisses and praise for 20 minutes straight.",
+                "default_duration_minutes": 20
+            }
+        ]
+    }
     
-    spicy_suggestions = [
-        {
-            "title": "Tease with a photo",
-            "description": "Take a playful photo that shows just enough to make your partner excited.",
-            "default_duration_minutes": 30
-        },
-        {
-            "title": "Write a steamy note",
-            "description": "Leave your partner a handwritten note describing what you want to do together.",
-            "default_duration_minutes": 20
-        },
-        {
-            "title": "Dance for your partner",
-            "description": "Put on your favorite song and give your partner a private dance show.",
-            "default_duration_minutes": 45
-        }
-    ]
+    # Regular mood suggestions
+    regular_suggestions = {
+        'feeling_spicy': [
+            {
+                "title": "Tease with a photo",
+                "description": "Take a playful photo that shows just enough to make your partner excited.",
+                "default_duration_minutes": 30
+            }
+        ],
+        'horny': [
+            {
+                "title": "Pleasure yourself thinking of them",
+                "description": "Focus entirely on your partner while pleasuring yourself and describe the experience.",
+                "default_duration_minutes": 45
+            }
+        ],
+        'teasing': [
+            {
+                "title": "Send anticipation messages",
+                "description": "Send teasing messages throughout the day about what you want to do later.",
+                "default_duration_minutes": 30
+            }
+        ]
+    }
     
-    extreme_suggestions = [
-        {
-            "title": "Submit a confession",
-            "description": "Write and send your partner your deepest fantasy about them.",
-            "default_duration_minutes": 30
-        },
-        {
-            "title": "Pleasure yourself thinking of them",
-            "description": "Focus entirely on your partner while pleasuring yourself and describe the experience.",
-            "default_duration_minutes": 45
-        },
-        {
-            "title": "Create anticipation",
-            "description": "Send detailed messages about exactly what you want to do to your partner.",
-            "default_duration_minutes": 60
-        }
-    ]
-    
-    # Choose suggestions based on mood and extreme mode
-    if is_extreme_mode and mood_type in ['available_for_use', 'feeling_submissive', 'wanna_edge', 'use_me_how_you_want', 'feeling_dominant']:
-        suggestions = extreme_suggestions
-    elif mood_type in ['feeling_spicy', 'horny', 'teasing'] + ['available_for_use', 'feeling_submissive', 'wanna_edge', 'use_me_how_you_want']:
-        suggestions = spicy_suggestions
+    # Choose suggestions based on mood type
+    if mood_type in mood_specific_suggestions:
+        suggestions = mood_specific_suggestions[mood_type]
+    elif mood_type in regular_suggestions:
+        suggestions = regular_suggestions[mood_type]
+    elif mood_type in ['feeling_spicy', 'horny', 'teasing']:
+        # Fallback spicy suggestions
+        suggestions = [
+            {
+                "title": "Create anticipation",
+                "description": "Send detailed messages about exactly what you want to do to your partner.",
+                "default_duration_minutes": 60
+            },
+            {
+                "title": "Tease with a photo",
+                "description": "Take a playful photo that shows just enough to make your partner excited.",
+                "default_duration_minutes": 30
+            }
+        ]
     else:
-        suggestions = regular_suggestions
+        # Default suggestions for other moods
+        suggestions = [
+            {
+                "title": "Connect intimately",
+                "description": "Spend quality time focusing on your connection and what makes you both happy.",
+                "default_duration_minutes": 45
+            },
+            {
+                "title": "Show your love",
+                "description": "Do something thoughtful that shows your partner how much you care about them.",
+                "default_duration_minutes": 30
+            }
+        ]
     
     return random.choice(suggestions)
 
