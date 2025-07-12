@@ -138,21 +138,38 @@ class Task(BaseModel):
     description: str
     reward: Optional[str] = None
     duration_minutes: int
-    status: str = "pending"  # pending, completed, expired
+    status: str = "pending"  # pending, completed, approved, rejected, expired
     proof_text: Optional[str] = None
-    proof_url: Optional[str] = None
+    proof_photo_base64: Optional[str] = None  # Base64 encoded photo proof
     created_at: datetime = Field(default_factory=datetime.utcnow)
     expires_at: datetime
+    completed_at: Optional[datetime] = None
+    approved_at: Optional[datetime] = None
+    tokens_earned: int = 5  # Default token reward per task
+    approval_message: Optional[str] = None  # Message from approver
 
 class TaskCreate(BaseModel):
     title: str
     description: str
     reward: Optional[str] = None
     duration_minutes: int = 60
+    tokens_earned: int = 5
 
 class TaskProof(BaseModel):
     proof_text: Optional[str] = None
-    proof_url: Optional[str] = None
+    proof_photo_base64: Optional[str] = None  # Base64 encoded photo
+
+class TaskApproval(BaseModel):
+    approved: bool
+    message: Optional[str] = None
+
+class UserTokens(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    couple_id: str
+    user_id: str
+    tokens: int = 0  # Current token balance
+    lifetime_tokens: int = 0  # Total tokens ever earned
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 class Reward(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
