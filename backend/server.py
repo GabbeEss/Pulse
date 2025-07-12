@@ -847,7 +847,7 @@ async def get_active_tasks(current_user: dict = Depends(get_current_user)):
         "couple_id": current_user["couple_id"],
         "status": {"$in": ["pending", "completed"]},
         "expires_at": {"$gt": datetime.utcnow()}
-    }).sort("created_at", -1).to_list(20)
+    }, {"_id": 0}).sort("created_at", -1).to_list(20)
     
     # Add time remaining for each task
     for task in tasks:
