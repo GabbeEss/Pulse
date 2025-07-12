@@ -1305,9 +1305,20 @@ const TaskCard = ({ task, currentUser, onProofSubmit, onTaskApprove, onRefresh, 
       <div className="bg-black/20 backdrop-blur-lg rounded-2xl p-6 border border-white/10">
         <div className="flex items-start justify-between mb-4">
           <h4 className="text-lg font-bold text-white pr-2 leading-tight">{task.title}</h4>
-          <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${getStatusColor(task.status)}`}>
-            {getStatusText(task.status)}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${getStatusColor(task.status)}`}>
+              {getStatusText(task.status)}
+            </span>
+            {canDelete && (
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="p-1 text-gray-400 hover:text-red-400 transition-colors"
+                title="Delete task"
+              >
+                🗑️
+              </button>
+            )}
+          </div>
         </div>
         
         <p className="text-gray-300 mb-4 leading-relaxed">{task.description}</p>
