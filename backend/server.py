@@ -699,7 +699,141 @@ async def approve_task(task_id: str, approval: TaskApproval, current_user: dict 
     
     return result
 
-# WebSocket endpoint
+# Token and Reward routes
+@api_router.get("/tokens")
+async def get_tokens(current_user: dict = Depends(get_current_user)):
+    """Get current token balance for the user"""
+    if not current_user.get("couple_id"):
+        return {"tokens": 0, "lifetime_tokens": 0}
+    
+    user_tokens = await db.user_tokens.find_one({
+        "user_id": current_user["id"], 
+        "couple_id": current_user["couple_id"]
+    })
+    
+    if not user_tokens:
+        return {"tokens": 0, "lifetime_tokens": 0}
+    
+    return {
+        "tokens": user_tokens["tokens"],
+        "lifetime_tokens": user_tokens["lifetime_tokens"]
+    }
+
+@api_router.get("/couple/tokens")
+async def get_couple_tokens_info(current_user: dict = Depends(get_current_user)):
+    """Get token balances for both partners"""
+    if not current_user.get("couple_id"):
+        raise HTTPException(status_code=400, detail="Must be linked with a partner")
+    
+    couple_tokens = await get_couple_tokens(current_user["couple_id"])
+    
+    # Get partner info
+    partner = await db.users.find_one({
+        "couple_id": current_user["couple_id"],
+        "id": {"$ne": current_user["id"]}
+    })
+    
+    return {
+        "your_tokens": couple_tokens.get(current_user["id"], 0),
+        "partner_tokens": couple_tokens.get(partner["id"], 0) if partner else 0,
+        "partner_name": partner["name"] if partner else "Partner"
+    }
+
+@api_router.post("/rewards")
+async def create_reward(reward: RewardCreate, current_user: dict = Depends(get_current_user)):
+    """Create a new reward for the couple"""
+    if not current_user.get("couple_id"):
+        raise HTTPException(status_code=400, detail="Must be linked with a partner to create rewards")
+    
+    reward_obj = Reward(
+        couple_id=current_user["couple_id"],
+        creator_id=current_user["id"],
+        title=reward.title,
+        description=reward.description,
+        tokens_cost=reward.tokens_cost
+    )
+    
+    await db.rewards.insert_one(reward_obj.dict())
+    
+    # Send notification to partner
+    await manager.send_to_partner(current_user["id"], {
+        "type": "new_reward",
+        "reward": reward_obj.dict(),
+        "message": f"New reward added: {reward.title} ({reward.tokens_cost} tokens)"
+    })
+    
+    return reward_obj.dict()
+
+@api_router.get("/rewards")
+async def get_rewards(current_user: dict = Depends(get_current_user)):
+    """Get all rewards for the couple"""
+    if not current_user.get("couple_id"):
+        return []
+    
+    rewards = await db.rewards.find({
+        "couple_id": current_user["couple_id"]
+    }).sort("created_at", -1).to_list(50)
+    
+    return rewards
+
+@api_router.post("/rewards/redeem")
+async def redeem_reward(redeem_data: RewardRedeem, current_user: dict = Depends(get_current_user)):
+    """Redeem a reward using tokens"""
+    if not current_user.get("couple_id"):
+        raise HTTPException(status_code=400, detail="Must be linked with a partner")
+    
+    # Find the reward
+    reward = await db.rewards.find_one({
+        "id": redeem_data.reward_id,
+        "couple_id": current_user["couple_id"]
+    })
+    
+    if not reward:
+        raise HTTPException(status_code=404, detail="Reward not found")
+    
+    if reward["is_redeemed"]:
+        raise HTTPException(status_code=400, detail="Reward already redeemed")
+    
+    # Check if user has enough tokens
+    user_balance = await get_user_tokens(current_user["id"], current_user["couple_id"])
+    if user_balance < reward["tokens_cost"]:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Not enough tokens. Need {reward['tokens_cost']}, have {user_balance}"
+        )
+    
+    # Spend tokens
+    success = await spend_tokens(current_user["id"], current_user["couple_id"], reward["tokens_cost"])
+    if not success:
+        raise HTTPException(status_code=400, detail="Failed to spend tokens")
+    
+    # Mark reward as redeemed
+    await db.rewards.update_one(
+        {"id": redeem_data.reward_id},
+        {"$set": {
+            "is_redeemed": True,
+            "redeemed_by": current_user["id"],
+            "redeemed_at": datetime.utcnow()
+        }}
+    )
+    
+    # Get new token balance
+    new_balance = await get_user_tokens(current_user["id"], current_user["couple_id"])
+    
+    # Send notification to partner
+    await manager.send_to_partner(current_user["id"], {
+        "type": "reward_redeemed",
+        "reward": reward,
+        "redeemed_by": current_user["name"],
+        "message": f"{current_user['name']} redeemed: {reward['title']}"
+    })
+    
+    return {
+        "message": "Reward redeemed successfully",
+        "reward": reward,
+        "tokens_spent": reward["tokens_cost"],
+        "new_balance": new_balance
+    }
 @app.websocket("/ws/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, user_id: str):
     await manager.connect(websocket, user_id)
