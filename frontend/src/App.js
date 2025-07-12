@@ -762,7 +762,7 @@ const PairingScreen = ({ user }) => {
           {/* Helper Text */}
           <div className="text-center">
             <p className="text-xs text-gray-400">
-              Enter your partner's 6-digit code to link your accounts and start sharing intimate moments together.
+              Enter your partner's 6-character code to link your accounts and start sharing intimate moments together.
             </p>
           </div>
         </form>
