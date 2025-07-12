@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, createContext } from 'react';
+import React, { useState, useEffect, useContext, createContext, useRef } from 'react';
 import './App.css';
 import axios from 'axios';
 
@@ -52,10 +52,11 @@ const useAuth = () => {
   return context;
 };
 
-// WebSocket Hook
+// Enhanced WebSocket Hook with Notifications
 const useWebSocket = (userId) => {
   const [socket, setSocket] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
     if (userId) {
@@ -70,6 +71,17 @@ const useWebSocket = (userId) => {
       ws.onmessage = (event) => {
         const message = JSON.parse(event.data);
         setMessages(prev => [...prev, message]);
+        
+        // Add notification for display
+        if (message.type && message.message) {
+          const notification = {
+            id: Date.now(),
+            type: message.type,
+            message: message.message,
+            timestamp: new Date()
+          };
+          setNotifications(prev => [notification, ...prev.slice(0, 9)]); // Keep last 10
+        }
       };
       
       ws.onclose = () => {
@@ -83,7 +95,11 @@ const useWebSocket = (userId) => {
     }
   }, [userId]);
 
-  return { socket, messages };
+  const dismissNotification = (id) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  return { socket, messages, notifications, dismissNotification };
 };
 
 // Components
