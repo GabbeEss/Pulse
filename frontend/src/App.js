@@ -1505,6 +1505,48 @@ const TaskCard = ({ task, currentUser, onProofSubmit, onTaskApprove, onRefresh, 
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-black/90 backdrop-blur-lg rounded-2xl p-6 border border-white/10 max-w-md w-full">
+            <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              🗑️ Delete Task
+            </h3>
+            
+            <div className="mb-4">
+              <p className="text-gray-300 mb-2">Are you sure you want to delete this task?</p>
+              <div className="p-3 bg-white/10 rounded-xl">
+                <p className="text-white font-semibold">{task.title}</p>
+                <p className="text-gray-400 text-sm">{task.description}</p>
+              </div>
+            </div>
+
+            <div className="bg-yellow-500/20 border border-yellow-400/30 rounded-xl p-3 mb-4">
+              <p className="text-yellow-400 text-sm flex items-center gap-2">
+                ⚠️ This action cannot be undone
+              </p>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={handleDelete}
+                disabled={submitting}
+                className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {submitting ? 'Deleting...' : 'Delete Task'}
+              </button>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={submitting}
+                className="px-6 py-3 bg-white/10 border border-white/20 rounded-xl text-gray-300 hover:bg-white/20 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
