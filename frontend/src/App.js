@@ -1274,14 +1274,14 @@ const TaskCard = ({ task, currentUser, onProofSubmit, onTaskApprove, onRefresh }
   return (
     <>
       <div className="bg-black/20 backdrop-blur-lg rounded-2xl p-6 border border-white/10">
-        <div className="flex items-start justify-between mb-3">
-          <h4 className="text-lg font-semibold text-white pr-2">{task.title}</h4>
-          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(task.status)}`}>
+        <div className="flex items-start justify-between mb-4">
+          <h4 className="text-lg font-bold text-white pr-2 leading-tight">{task.title}</h4>
+          <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${getStatusColor(task.status)}`}>
             {getStatusText(task.status)}
           </span>
         </div>
         
-        <p className="text-gray-300 mb-3">{task.description}</p>
+        <p className="text-gray-300 mb-4 leading-relaxed">{task.description}</p>
         
         {task.reward && (
           <p className="text-pink-400 mb-3">🎁 Reward: {task.reward}</p>
