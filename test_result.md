@@ -136,6 +136,9 @@ backend:
       - working: false
         agent: "main"
         comment: "COMPLETED IMPLEMENTATION: Enhanced Task model with approval workflow (pending->completed->approved/rejected), photo proof via base64, token rewards system. Added TaskApproval, UserTokens models. Created comprehensive API endpoints for proof submission, task approval with automatic token awarding."
+      - working: false
+        agent: "main"
+        comment: "CRITICAL FIX APPLIED: Fixed MongoDB ObjectId serialization errors by adding {'_id': 0} projection to all database queries. This was causing 500 errors on all task and reward endpoints. Backend restarted successfully."
   - task: "Token/Reward Bank System - Backend"
     implemented: true
     working: false
