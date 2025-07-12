@@ -370,7 +370,7 @@ def get_mock_ai_suggestion(mood_type: str, intensity: int, boundaries: List[str]
 @api_router.post("/auth/register")
 async def register(user: UserCreate):
     # Check if user exists
-    existing_user = await db.users.find_one({"email": user.email})
+    existing_user = await db.users.find_one({"email": user.email}, {"_id": 0})
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
