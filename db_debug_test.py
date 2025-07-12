@@ -9,7 +9,7 @@ from datetime import datetime
 
 def test_database_query():
     """Test the database query directly"""
-    base_url = "https://311a621a-67d9-4d77-a839-83196fdd23dc.preview.emergentagent.com"
+    base_url = "https://ab68f583-e369-494f-b7f6-93bb401f8c1b.preview.emergentagent.com"
     api_url = f"{base_url}/api"
     
     # Register a user

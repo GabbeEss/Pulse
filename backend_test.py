@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 import time
 
 class PulseAPITester:
-    def __init__(self, base_url="https://311a621a-67d9-4d77-a839-83196fdd23dc.preview.emergentagent.com"):
+    def __init__(self, base_url="https://ab68f583-e369-494f-b7f6-93bb401f8c1b.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.user1_token = None
