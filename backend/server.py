@@ -568,7 +568,8 @@ async def create_task(task: TaskCreate, current_user: dict = Depends(get_current
         description=task.description,
         reward=task.reward,
         duration_minutes=task.duration_minutes,
-        expires_at=expires_at
+        expires_at=expires_at,
+        tokens_earned=task.tokens_earned
     )
     
     await db.tasks.insert_one(task_obj.dict())
@@ -576,7 +577,8 @@ async def create_task(task: TaskCreate, current_user: dict = Depends(get_current
     # Send real-time notification to partner
     await manager.send_to_partner(current_user["id"], {
         "type": "new_task",
-        "task": task_obj.dict()
+        "task": task_obj.dict(),
+        "message": f"New HeatTask assigned: {task.title}"
     })
     
     return task_obj.dict()
