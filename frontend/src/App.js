@@ -554,6 +554,7 @@ const TaskCreator = ({ onTaskCreate }) => {
   const [description, setDescription] = useState('');
   const [reward, setReward] = useState('');
   const [duration, setDuration] = useState(60);
+  const [tokensEarned, setTokensEarned] = useState(5);
   const [showForm, setShowForm] = useState(false);
 
   const handleSubmit = (e) => {
@@ -562,12 +563,14 @@ const TaskCreator = ({ onTaskCreate }) => {
       title,
       description,
       reward,
-      duration_minutes: duration
+      duration_minutes: duration,
+      tokens_earned: tokensEarned
     });
     setTitle('');
     setDescription('');
     setReward('');
     setDuration(60);
+    setTokensEarned(5);
     setShowForm(false);
   };
 
@@ -621,6 +624,18 @@ const TaskCreator = ({ onTaskCreate }) => {
             max="240"
             value={duration}
             onChange={(e) => setDuration(e.target.value)}
+            className="w-full"
+          />
+        </div>
+
+        <div>
+          <label className="block text-gray-300 mb-2">Token Reward: {tokensEarned} 🪙</label>
+          <input
+            type="range"
+            min="1"
+            max="20"
+            value={tokensEarned}
+            onChange={(e) => setTokensEarned(e.target.value)}
             className="w-full"
           />
         </div>
