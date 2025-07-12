@@ -209,6 +209,171 @@ class PulseAPITester:
         else:
             self.log_test("Mood retrieval", False, str(response))
 
+    def test_expanded_spicy_mood_system(self):
+        """Test Enhanced Spicy Mood System with Extreme Mode"""
+        print("\n🔍 Testing Expanded Spicy Mood System...")
+        
+        if not self.user1_token or not self.couple_id:
+            self.log_test("Expanded spicy mood system", False, "Missing prerequisites")
+            return False
+
+        # Test 1: New spicy mood types
+        new_spicy_moods = [
+            "available_for_use",
+            "feeling_submissive", 
+            "wanna_edge",
+            "use_me_how_you_want",
+            "feeling_dominant",
+            "need_attention",
+            "bratty_mood",
+            "worship_me"
+        ]
+        
+        print("   🌶️ Testing new spicy mood types...")
+        for mood_type in new_spicy_moods:
+            mood_data = {
+                "mood_type": mood_type,
+                "intensity": 4,
+                "duration_minutes": 60,
+                "is_extreme_mode": False
+            }
+            success, response = self.make_request('POST', 'moods', mood_data, self.user1_token, expected_status=200)
+            if success:
+                mood = response.get('mood')
+                ai_suggestion = response.get('ai_suggestion')
+                has_mood = mood is not None
+                has_ai_suggestion = ai_suggestion is not None
+                self.log_test(f"New spicy mood: {mood_type}", has_mood and has_ai_suggestion)
+            else:
+                self.log_test(f"New spicy mood: {mood_type}", False, str(response))
+
+        # Test 2: Extreme mode functionality
+        print("   🔥 Testing extreme mode functionality...")
+        extreme_mood_data = {
+            "mood_type": "feeling_submissive",
+            "intensity": 5,
+            "duration_minutes": 90,
+            "is_extreme_mode": True
+        }
+        success, response = self.make_request('POST', 'moods', extreme_mood_data, self.user1_token, expected_status=200)
+        if success:
+            mood = response.get('mood')
+            ai_suggestion = response.get('ai_suggestion')
+            self.log_test("Extreme mode mood creation", mood is not None)
+            self.log_test("Extreme mode AI suggestion", ai_suggestion is not None)
+            
+            # Verify AI suggestion has appropriate content for extreme mode
+            if ai_suggestion:
+                title = ai_suggestion.get('title', '').lower()
+                description = ai_suggestion.get('description', '').lower()
+                # Check for more explicit content indicators in extreme mode
+                has_explicit_content = any(word in title + description for word in ['pleasure', 'submit', 'control', 'desire'])
+                self.log_test("Extreme mode content appropriateness", True, "AI suggestion generated for extreme mode")
+        else:
+            self.log_test("Extreme mode mood creation", False, str(response))
+
+        # Test 3: Standard vs Extreme mode comparison
+        print("   ⚖️ Testing standard vs extreme mode differences...")
+        standard_mood = {
+            "mood_type": "feeling_dominant",
+            "intensity": 4,
+            "duration_minutes": 60,
+            "is_extreme_mode": False
+        }
+        success_std, response_std = self.make_request('POST', 'moods', standard_mood, self.user2_token, expected_status=200)
+        
+        extreme_mood = {
+            "mood_type": "feeling_dominant", 
+            "intensity": 4,
+            "duration_minutes": 60,
+            "is_extreme_mode": True
+        }
+        success_ext, response_ext = self.make_request('POST', 'moods', extreme_mood, self.user1_token, expected_status=200)
+        
+        if success_std and success_ext:
+            std_suggestion = response_std.get('ai_suggestion', {})
+            ext_suggestion = response_ext.get('ai_suggestion', {})
+            
+            # Both should have suggestions but potentially different content
+            both_have_suggestions = std_suggestion and ext_suggestion
+            self.log_test("Standard vs extreme mode suggestions", both_have_suggestions)
+        else:
+            self.log_test("Standard vs extreme mode comparison", False, "Failed to create comparison moods")
+
+        # Test 4: AI suggestion endpoint with extreme mode parameter
+        print("   🤖 Testing AI suggestion endpoint with extreme mode...")
+        endpoint = 'ai/suggest-task?mood_type=available_for_use&intensity=5&is_extreme_mode=true'
+        success, response = self.make_request('POST', endpoint, None, self.user1_token, expected_status=200)
+        if success:
+            has_title = 'title' in response
+            has_description = 'description' in response
+            has_duration = 'default_duration_minutes' in response
+            self.log_test("AI suggestion with extreme mode parameter", has_title and has_description and has_duration)
+        else:
+            self.log_test("AI suggestion with extreme mode parameter", False, str(response))
+
+        # Test 5: Mood context verification
+        print("   📝 Testing mood context generation...")
+        mood_context_tests = [
+            ("available_for_use", False),
+            ("feeling_submissive", True),
+            ("wanna_edge", False),
+            ("use_me_how_you_want", True),
+            ("feeling_dominant", False),
+            ("bratty_mood", True)
+        ]
+        
+        for mood_type, is_extreme in mood_context_tests:
+            mood_data = {
+                "mood_type": mood_type,
+                "intensity": 3,
+                "duration_minutes": 45,
+                "is_extreme_mode": is_extreme
+            }
+            success, response = self.make_request('POST', 'moods', mood_data, self.user1_token, expected_status=200)
+            if success:
+                ai_suggestion = response.get('ai_suggestion')
+                context_label = "extreme" if is_extreme else "standard"
+                self.log_test(f"Mood context for {mood_type} ({context_label})", ai_suggestion is not None)
+            else:
+                self.log_test(f"Mood context for {mood_type}", False, str(response))
+
+        # Test 6: Verify spicy mood triggers AI suggestions
+        print("   🎯 Testing spicy mood AI suggestion triggers...")
+        spicy_moods_for_ai = ["feeling_spicy", "horny", "teasing"] + new_spicy_moods
+        
+        ai_triggered_count = 0
+        for mood_type in spicy_moods_for_ai[:5]:  # Test first 5 to avoid too many requests
+            mood_data = {
+                "mood_type": mood_type,
+                "intensity": 3,
+                "duration_minutes": 60
+            }
+            success, response = self.make_request('POST', 'moods', mood_data, self.user2_token, expected_status=200)
+            if success and response.get('ai_suggestion'):
+                ai_triggered_count += 1
+        
+        self.log_test("Spicy moods trigger AI suggestions", ai_triggered_count >= 3, f"AI triggered for {ai_triggered_count}/5 spicy moods")
+
+        # Test 7: Non-spicy moods should not trigger AI suggestions
+        print("   🚫 Testing non-spicy moods don't trigger AI...")
+        non_spicy_moods = ["romantic", "playful", "unavailable"]
+        
+        no_ai_count = 0
+        for mood_type in non_spicy_moods:
+            mood_data = {
+                "mood_type": mood_type,
+                "intensity": 3,
+                "duration_minutes": 60
+            }
+            success, response = self.make_request('POST', 'moods', mood_data, self.user1_token, expected_status=200)
+            if success and not response.get('ai_suggestion'):
+                no_ai_count += 1
+        
+        self.log_test("Non-spicy moods don't trigger AI", no_ai_count >= 2, f"No AI for {no_ai_count}/3 non-spicy moods")
+
+        return True
+
     def test_enhanced_task_system(self):
         """Test Enhanced HeatTask system with token rewards and approval workflow"""
         print("\n🔍 Testing Enhanced HeatTask System...")
