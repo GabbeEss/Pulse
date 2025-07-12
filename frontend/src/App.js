@@ -1295,12 +1295,19 @@ const Dashboard = ({ user }) => {
           </div>
           <div className="flex items-center gap-4">
             <TokenDisplay tokens={tokens.tokens} lifetimeTokens={tokens.lifetime_tokens} size="normal" />
-            <button
-              onClick={logout}
-              className="p-2 bg-white/10 rounded-full text-gray-300 hover:bg-white/20 transition-colors"
-            >
-              <span className="text-xl">🚪</span>
-            </button>
+            {/* Enhanced Logout Button */}
+            <div className="relative group">
+              <button
+                onClick={logout}
+                className="flex items-center gap-2 p-2 bg-white/10 rounded-xl text-gray-300 hover:bg-white/20 transition-colors border border-white/10"
+              >
+                <span className="text-lg">🚪</span>
+                <span className="text-sm font-medium">Logout</span>
+              </button>
+              <div className="absolute -bottom-8 right-0 text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                Switch accounts
+              </div>
+            </div>
           </div>
         </div>
 
