@@ -146,13 +146,14 @@ class PulseAPITester:
             self.log_test("Partner pairing", False, "Missing user tokens")
             return False
 
-        # Get pairing code from user 1
-        pairing_code = self.user1_data.get('pairing_code')
-        if not pairing_code:
-            self.log_test("Pairing code generation", False, "No pairing code found")
+        # Get pairing code from user 1 via API
+        success, response = self.make_request('GET', 'pairing/code', token=self.user1_token, expected_status=200)
+        if success:
+            pairing_code = response.get('pairing_code')
+            self.log_test("Pairing code generation", pairing_code is not None)
+        else:
+            self.log_test("Pairing code generation", False, str(response))
             return False
-        
-        self.log_test("Pairing code generation", True)
 
         # User 2 links with user 1's code
         pairing_data = {"pairing_code": pairing_code}
