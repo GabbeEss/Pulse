@@ -351,7 +351,7 @@ Please suggest an intimate task that matches their current mood and intensity le
         return get_mock_ai_suggestion(mood_type, intensity, boundaries, is_extreme_mode)
 
 def get_mood_context(mood_type: str, is_extreme_mode: bool = False) -> str:
-    """Get descriptive context for each mood type"""
+    """Get descriptive context for each mood type with enhanced AI prompting"""
     mood_contexts = {
         # Regular moods
         'feeling_spicy': 'Partner is feeling adventurous and wants to add some heat to their connection',
@@ -361,23 +361,52 @@ def get_mood_context(mood_type: str, is_extreme_mode: bool = False) -> str:
         'playful': 'Partner wants fun, lighthearted activities that bring joy and laughter',
         'unavailable': 'Partner is busy or not in the mood for intimate activities',
         
-        # Expanded spicy moods
-        'available_for_use': 'Partner is offering themselves for their lover\'s pleasure and desires',
-        'feeling_submissive': 'Partner is in a submissive headspace and wants to please their dominant',
-        'wanna_edge': 'Partner wants to experience prolonged arousal and delayed gratification',
-        'use_me_how_you_want': 'Partner is giving full consent for their partner to take control',
-        'feeling_dominant': 'Partner wants to take charge and lead the intimate experience',
-        'need_attention': 'Partner craves focused attention and worship from their lover',
-        'bratty_mood': 'Partner is feeling mischievous and wants to playfully challenge their partner',
-        'worship_me': 'Partner wants to be adored, praised, and treated like royalty'
+        # Expanded spicy moods with specific AI prompting intent
+        'available_for_use': 'Partner is offering themselves for free-use and wants to be used for their lover\'s pleasure',
+        'feeling_submissive': 'Partner is in a submissive headspace and wants to serve, please, and obey their dominant',
+        'wanna_edge': 'Partner wants to experience prolonged arousal, teasing, and delayed gratification without release',
+        'use_me_how_you_want': 'Partner is giving complete control and consent for their partner to dominate and use them',
+        'feeling_dominant': 'Partner wants to take complete charge, control, and command the intimate experience',
+        'need_attention': 'Partner craves focused attention, worship, and adoration from their lover',
+        'bratty_mood': 'Partner is feeling mischievous, defiant, and wants to playfully challenge their partner',
+        'worship_me': 'Partner wants to be adored, praised, served, and treated like royalty or a deity'
     }
     
     base_context = mood_contexts.get(mood_type, 'Partner has selected a custom mood')
     
     if is_extreme_mode and mood_type in ['available_for_use', 'feeling_submissive', 'wanna_edge', 'use_me_how_you_want', 'feeling_dominant', 'bratty_mood']:
-        base_context += " (Extreme mode: More explicit and kink-friendly content is welcomed)"
+        base_context += " (Extreme mode: More explicit, kinky, and intense content is welcomed)"
     
     return base_context
+
+def get_mood_prompt_intent(mood_type: str, is_extreme_mode: bool = False) -> str:
+    """Get specific AI prompting intent for each mood type"""
+    mood_prompts = {
+        # Regular moods
+        'feeling_spicy': 'Create a sensual, exciting task that builds sexual tension and intimacy',
+        'horny': 'Create an arousing, sexually charged task focused on physical pleasure',
+        'teasing': 'Create a playful, flirtatious task that builds anticipation and sexual tension',
+        'romantic': 'Create an emotionally intimate, loving task that strengthens romantic connection',
+        'playful': 'Create a fun, lighthearted task that brings joy and playful intimacy',
+        'unavailable': 'Create a simple, low-pressure task for later when they\'re available',
+        
+        # Enhanced spicy moods with specific prompting
+        'available_for_use': 'Create a free-use, consensual task where the submissive partner is used for pleasure',
+        'feeling_submissive': 'Create a submission-focused task involving serving, pleasing, or obeying their dominant',
+        'wanna_edge': 'Create an edging/teasing task involving prolonged arousal without climax or release',
+        'use_me_how_you_want': 'Create a dominant/submissive power exchange task with complete control dynamics',
+        'feeling_dominant': 'Create a dominant, controlling task where the partner takes complete charge',
+        'need_attention': 'Create a worship, attention-focused task where the partner is adored and served',
+        'bratty_mood': 'Create a playful punishment or taming task to handle bratty, defiant behavior',
+        'worship_me': 'Create a worship, reverence task where the partner is treated like royalty'
+    }
+    
+    base_prompt = mood_prompts.get(mood_type, 'Create an intimate task appropriate for the mood')
+    
+    if is_extreme_mode and mood_type in ['available_for_use', 'feeling_submissive', 'wanna_edge', 'use_me_how_you_want', 'feeling_dominant', 'bratty_mood']:
+        base_prompt += ". Make it more explicit, intense, and kinky since extreme mode is enabled"
+    
+    return base_prompt
 
 def get_mock_ai_suggestion(mood_type: str, intensity: int, boundaries: List[str], is_extreme_mode: bool = False) -> dict:
     """
