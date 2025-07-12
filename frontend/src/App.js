@@ -296,6 +296,202 @@ const TokenDisplay = ({ tokens, lifetimeTokens, size = "normal" }) => {
     </div>
   );
 };
+
+// Reward Creator Component
+const RewardCreator = ({ onRewardCreate }) => {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [tokensCost, setTokensCost] = useState(10);
+  const [showForm, setShowForm] = useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onRewardCreate({
+      title,
+      description,
+      tokens_cost: tokensCost
+    });
+    setTitle('');
+    setDescription('');
+    setTokensCost(10);
+    setShowForm(false);
+  };
+
+  if (!showForm) {
+    return (
+      <button
+        onClick={() => setShowForm(true)}
+        className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white py-4 rounded-2xl font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+      >
+        <span className="text-xl">🎁</span>
+        Create Reward
+      </button>
+    );
+  }
+
+  return (
+    <div className="bg-black/20 backdrop-blur-lg rounded-2xl p-6 border border-white/10">
+      <h3 className="text-xl font-bold text-white mb-4">Create Reward</h3>
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <input
+          type="text"
+          placeholder="Reward title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+          required
+        />
+        
+        <textarea
+          placeholder="Describe the reward..."
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 h-24 resize-none"
+          required
+        />
+
+        <div>
+          <label className="block text-gray-300 mb-2">Token Cost: {tokensCost} 🪙</label>
+          <input
+            type="range"
+            min="1"
+            max="50"
+            value={tokensCost}
+            onChange={(e) => setTokensCost(e.target.value)}
+            className="w-full"
+          />
+        </div>
+        
+        <div className="flex gap-3">
+          <button
+            type="submit"
+            className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity"
+          >
+            Create Reward
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowForm(false)}
+            className="px-6 py-3 bg-white/10 border border-white/20 rounded-xl text-gray-300 hover:bg-white/20 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+// Reward Card Component
+const RewardCard = ({ reward, onRedeem, userTokens, isRedeemable = true }) => {
+  const [showRedeemModal, setShowRedeemModal] = useState(false);
+  const [redeeming, setRedeeming] = useState(false);
+  
+  const canAfford = userTokens >= reward.tokens_cost;
+  const isAvailable = !reward.is_redeemed && isRedeemable;
+
+  const handleRedeem = async () => {
+    if (!canAfford) {
+      alert(`Not enough tokens! You need ${reward.tokens_cost} but have ${userTokens}`);
+      return;
+    }
+
+    setRedeeming(true);
+    try {
+      await onRedeem(reward.id);
+      setShowRedeemModal(false);
+    } catch (error) {
+      console.error('Error redeeming reward:', error);
+      alert('Failed to redeem reward');
+    } finally {
+      setRedeeming(false);
+    }
+  };
+
+  return (
+    <>
+      <div className={`bg-black/20 backdrop-blur-lg rounded-2xl p-6 border border-white/10 ${
+        reward.is_redeemed ? 'opacity-60' : ''
+      }`}>
+        <div className="flex items-start justify-between mb-3">
+          <h4 className="text-lg font-semibold text-white pr-2">{reward.title}</h4>
+          {reward.is_redeemed && (
+            <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-500/20 text-green-400">
+              Redeemed ✅
+            </span>
+          )}
+        </div>
+        
+        <p className="text-gray-300 mb-4">{reward.description}</p>
+        
+        <div className="flex items-center justify-between mb-4">
+          <TokenDisplay tokens={reward.tokens_cost} size="normal" />
+          {reward.is_redeemed && reward.redeemed_at && (
+            <span className="text-xs text-gray-400">
+              Redeemed {new Date(reward.redeemed_at).toLocaleDateString()}
+            </span>
+          )}
+        </div>
+
+        {isAvailable && (
+          <button
+            onClick={() => setShowRedeemModal(true)}
+            disabled={!canAfford}
+            className={`w-full py-3 rounded-xl font-semibold transition-opacity ${
+              canAfford 
+                ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white hover:opacity-90' 
+                : 'bg-gray-500/20 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            {canAfford ? 'Redeem' : `Need ${reward.tokens_cost - userTokens} more tokens`}
+          </button>
+        )}
+      </div>
+
+      {/* Redeem Confirmation Modal */}
+      {showRedeemModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-black/90 backdrop-blur-lg rounded-2xl p-6 border border-white/10 max-w-sm w-full">
+            <h3 className="text-xl font-bold text-white mb-4">Redeem Reward</h3>
+            
+            <div className="text-center mb-6">
+              <h4 className="text-lg text-yellow-400 mb-2">{reward.title}</h4>
+              <p className="text-gray-300 mb-4">{reward.description}</p>
+              
+              <div className="flex items-center justify-center gap-4 mb-4">
+                <span className="text-gray-400">Cost:</span>
+                <TokenDisplay tokens={reward.tokens_cost} size="large" />
+              </div>
+              
+              <div className="flex items-center justify-center gap-4">
+                <span className="text-gray-400">Your balance:</span>
+                <TokenDisplay tokens={userTokens} size="large" />
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={handleRedeem}
+                disabled={redeeming}
+                className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {redeeming ? 'Redeeming...' : 'Confirm Redeem'}
+              </button>
+              <button
+                onClick={() => setShowRedeemModal(false)}
+                disabled={redeeming}
+                className="px-6 py-3 bg-white/10 border border-white/20 rounded-xl text-gray-300 hover:bg-white/20 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
 const LoginForm = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
