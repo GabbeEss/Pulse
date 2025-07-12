@@ -731,7 +731,7 @@ async def get_couple_tokens_info(current_user: dict = Depends(get_current_user))
     partner = await db.users.find_one({
         "couple_id": current_user["couple_id"],
         "id": {"$ne": current_user["id"]}
-    })
+    }, {"_id": 0})
     
     return {
         "your_tokens": couple_tokens.get(current_user["id"], 0),
