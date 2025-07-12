@@ -276,41 +276,52 @@ from emergentintegrations.llm.chat import LlmChat, UserMessage
 async def get_ai_suggestion(mood_type: str, intensity: int, boundaries: List[str], is_extreme_mode: bool = False) -> dict:
     """
     Generate AI-powered HeatTask suggestions using OpenAI GPT-4o
+    Enhanced with mood-based context and extreme mode support
     """
     try:
         # Get OpenAI API key from environment
         openai_api_key = os.environ.get('OPENAI_API_KEY')
         if not openai_api_key:
             logger.warning("OpenAI API key not found, falling back to mock suggestions")
-            return get_mock_ai_suggestion(mood_type, intensity, boundaries)
+            return get_mock_ai_suggestion(mood_type, intensity, boundaries, is_extreme_mode)
         
-        # Create LLM chat instance
+        # Create LLM chat instance with enhanced system message
+        mood_context = get_mood_context(mood_type, is_extreme_mode)
+        
         chat = LlmChat(
             api_key=openai_api_key,
             session_id=f"heat_task_{datetime.utcnow().isoformat()}",
-            system_message="""You are an AI intimacy coach for the Pulse app, helping couples create playful and intimate connection through personalized HeatTasks. 
+            system_message=f"""You are an AI intimacy coach for the Pulse app, helping couples create playful and intimate connection through personalized HeatTasks. 
+
+Current mood context: {mood_context}
 
 Guidelines:
-- Generate creative, age-appropriate intimate tasks for adult couples
-- Tasks should build emotional and physical intimacy
-- Respect user boundaries and comfort levels
-- Tasks can range from playful to sensual based on mood intensity
+- Generate creative, age-appropriate intimate tasks for adult couples (18+)
+- Tasks should build emotional and physical intimacy based on the current mood
+- Respect user boundaries and comfort levels strictly
+- Tasks can range from playful to sensual based on mood intensity and extreme mode setting
 - Include clear, actionable instructions
 - Suggest realistic timeframes (15-90 minutes)
 - Focus on connection, communication, and fun
-- Keep content tasteful and respectful
+- Keep content tasteful yet expressive
+- For kink/BDSM moods, emphasize safety, consent, and communication
+- Adjust explicitness based on extreme mode setting
 
 Response format should be valid JSON with: title, description, default_duration_minutes"""
         ).with_model("openai", "gpt-4o").with_max_tokens(500)
         
-        # Prepare user message with context
+        # Prepare enhanced user message with mood context
         boundaries_text = ", ".join(boundaries) if boundaries else "No specific boundaries set"
+        extreme_context = " (Extreme mode enabled - more explicit content allowed)" if is_extreme_mode else " (Standard mode - keep content tasteful)"
+        
         user_prompt = f"""Generate a personalized HeatTask for a couple with these details:
 - Current mood: {mood_type}
+- Mood context: {mood_context}
 - Intensity level: {intensity}/5
 - Boundaries to respect: {boundaries_text}
+- Content level: {extreme_context}
 
-Please suggest an intimate task that matches their current mood and intensity level. The task should be engaging, fun, and appropriate for their boundaries."""
+Please suggest an intimate task that matches their current mood and intensity level. The task should be engaging, fun, and appropriate for their boundaries and selected content level."""
         
         user_message = UserMessage(text=user_prompt)
         
@@ -328,17 +339,46 @@ Please suggest an intimate task that matches their current mood and intensity le
                 return ai_suggestion
             else:
                 logger.warning("AI response missing required fields, using mock suggestion")
-                return get_mock_ai_suggestion(mood_type, intensity, boundaries)
+                return get_mock_ai_suggestion(mood_type, intensity, boundaries, is_extreme_mode)
                 
         except json.JSONDecodeError:
             logger.warning("Could not parse AI response as JSON, using mock suggestion")
-            return get_mock_ai_suggestion(mood_type, intensity, boundaries)
+            return get_mock_ai_suggestion(mood_type, intensity, boundaries, is_extreme_mode)
             
     except Exception as e:
         logger.error(f"Error getting AI suggestion: {str(e)}")
-        return get_mock_ai_suggestion(mood_type, intensity, boundaries)
+        return get_mock_ai_suggestion(mood_type, intensity, boundaries, is_extreme_mode)
 
-def get_mock_ai_suggestion(mood_type: str, intensity: int, boundaries: List[str]) -> dict:
+def get_mood_context(mood_type: str, is_extreme_mode: bool = False) -> str:
+    """Get descriptive context for each mood type"""
+    mood_contexts = {
+        # Regular moods
+        'feeling_spicy': 'Partner is feeling adventurous and wants to add some heat to their connection',
+        'horny': 'Partner is sexually aroused and looking for intimate physical connection',
+        'teasing': 'Partner is in a playful, flirtatious mood and enjoys building anticipation',
+        'romantic': 'Partner is seeking emotional intimacy and romantic connection',
+        'playful': 'Partner wants fun, lighthearted activities that bring joy and laughter',
+        'unavailable': 'Partner is busy or not in the mood for intimate activities',
+        
+        # Expanded spicy moods
+        'available_for_use': 'Partner is offering themselves for their lover\'s pleasure and desires',
+        'feeling_submissive': 'Partner is in a submissive headspace and wants to please their dominant',
+        'wanna_edge': 'Partner wants to experience prolonged arousal and delayed gratification',
+        'use_me_how_you_want': 'Partner is giving full consent for their partner to take control',
+        'feeling_dominant': 'Partner wants to take charge and lead the intimate experience',
+        'need_attention': 'Partner craves focused attention and worship from their lover',
+        'bratty_mood': 'Partner is feeling mischievous and wants to playfully challenge their partner',
+        'worship_me': 'Partner wants to be adored, praised, and treated like royalty'
+    }
+    
+    base_context = mood_contexts.get(mood_type, 'Partner has selected a custom mood')
+    
+    if is_extreme_mode and mood_type in ['available_for_use', 'feeling_submissive', 'wanna_edge', 'use_me_how_you_want', 'feeling_dominant', 'bratty_mood']:
+        base_context += " (Extreme mode: More explicit and kink-friendly content is welcomed)"
+    
+    return base_context
+
+def get_mock_ai_suggestion(mood_type: str, intensity: int, boundaries: List[str], is_extreme_mode: bool = False) -> dict:
     """
     Fallback mock suggestions when AI is unavailable
     """
