@@ -267,56 +267,25 @@ async def login(user: UserLogin):
         }
     }
 
-@api_router.post("/pairing/generate")
-async def generate_pairing_code(current_user: dict = Depends(get_current_user)):
-    if current_user.get("couple_id"):
-        raise HTTPException(status_code=400, detail="Already linked with a partner")
-    
-    # Generate new pairing code
-    pairing_code = generate_pairing_code()
-    
-    # Create pairing request
-    pairing_request = {
-        "id": str(uuid.uuid4()),
-        "user_id": current_user["id"],
-        "pairing_code": pairing_code,
-        "used": False,
-        "created_at": datetime.utcnow()
-    }
-    
-    # Remove any existing pairing requests for this user
-    await db.pairing_requests.delete_many({"user_id": current_user["id"]})
-    
-    # Insert new pairing request
-    await db.pairing_requests.insert_one(pairing_request)
-    
-    return {"pairing_code": pairing_code, "message": "Pairing code generated"}
-
 @api_router.get("/pairing/code")
 async def get_pairing_code(current_user: dict = Depends(get_current_user)):
     if current_user.get("couple_id"):
         raise HTTPException(status_code=400, detail="Already linked with a partner")
     
-    # Find existing pairing request
-    pairing_request = await db.pairing_requests.find_one({
-        "user_id": current_user["id"],
-        "used": False
-    })
+    # Generate a simple pairing code based on user ID
+    pairing_code = current_user["id"][-6:].upper()  # Use last 6 characters of user ID
     
-    if not pairing_request:
-        # Generate new one
-        pairing_code = generate_pairing_code()
-        pairing_request = {
-            "id": str(uuid.uuid4()),
-            "user_id": current_user["id"],
-            "pairing_code": pairing_code,
-            "used": False,
-            "created_at": datetime.utcnow()
-        }
-        await db.pairing_requests.insert_one(pairing_request)
-        return {"pairing_code": pairing_code}
+    return {"pairing_code": pairing_code}
+
+@api_router.post("/pairing/generate")
+async def generate_pairing_code_endpoint(current_user: dict = Depends(get_current_user)):
+    if current_user.get("couple_id"):
+        raise HTTPException(status_code=400, detail="Already linked with a partner")
     
-    return {"pairing_code": pairing_request["pairing_code"]}
+    # Generate a simple pairing code based on user ID
+    pairing_code = current_user["id"][-6:].upper()  # Use last 6 characters of user ID
+    
+    return {"pairing_code": pairing_code, "message": "Pairing code generated"}
 
 # Pairing routes
 @api_router.post("/pairing/link")
@@ -324,37 +293,25 @@ async def link_with_partner(request: PairingRequest, current_user: dict = Depend
     if current_user.get("couple_id"):
         raise HTTPException(status_code=400, detail="Already linked with a partner")
     
-    # Find pending pairing request by code
-    existing_pairing = await db.pairing_requests.find_one({
-        "pairing_code": request.pairing_code,
-        "user_id": {"$ne": current_user["id"]},
-        "used": False
-    })
+    # Find user with matching pairing code (last 6 characters of their ID)
+    all_users = await db.users.find({"couple_id": {"$exists": False}}).to_list(1000)
     
-    if not existing_pairing:
-        # Create new pairing request
-        pairing_request = {
-            "id": str(uuid.uuid4()),
-            "user_id": current_user["id"],
-            "pairing_code": request.pairing_code,
-            "used": False,
-            "created_at": datetime.utcnow()
-        }
-        await db.pairing_requests.insert_one(pairing_request)
-        return {"message": "Pairing request created. Waiting for partner to join.", "pairing_code": request.pairing_code}
+    partner = None
+    for user in all_users:
+        if user["id"] != current_user["id"] and user["id"][-6:].upper() == request.pairing_code:
+            partner = user
+            break
     
-    # Found matching pairing request - link partners
-    partner = await db.users.find_one({"id": existing_pairing["user_id"]})
     if not partner:
-        raise HTTPException(status_code=404, detail="Partner not found")
+        raise HTTPException(status_code=404, detail="Partner not found with this code")
     
     if partner.get("couple_id"):
         raise HTTPException(status_code=400, detail="Partner already linked with someone else")
     
     # Create couple
     couple = Couple(
-        user1_id=partner["id"],
-        user2_id=current_user["id"],
+        user1_id=current_user["id"],
+        user2_id=partner["id"],
         pairing_code=request.pairing_code
     )
     
@@ -368,12 +325,6 @@ async def link_with_partner(request: PairingRequest, current_user: dict = Depend
     await db.users.update_one(
         {"id": partner["id"]},
         {"$set": {"couple_id": couple.id}}
-    )
-    
-    # Mark pairing request as used
-    await db.pairing_requests.update_one(
-        {"id": existing_pairing["id"]},
-        {"$set": {"used": True}}
     )
     
     return {"message": "Successfully linked with partner", "couple_id": couple.id}
