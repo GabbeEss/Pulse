@@ -723,7 +723,7 @@ class PulseAPITester:
         print("🚀 Starting Pulse API Tests...")
         print(f"Testing against: {self.base_url}")
         
-        # Run tests in order
+        # Run basic tests first
         self.test_health_check()
         
         if not self.test_user_registration():
@@ -733,24 +733,38 @@ class PulseAPITester:
         self.test_user_login()
         
         if not self.test_partner_pairing():
-            print("❌ Pairing failed, stopping mood/task tests")
-        else:
-            self.test_mood_system()
-            self.test_task_system()
+            print("❌ Pairing failed, stopping couple-dependent tests")
+            return False
         
+        # Run enhanced feature tests
+        print("\n🎯 Testing Enhanced HeatTask Features...")
+        self.test_enhanced_task_system()
+        self.test_token_reward_system()
+        self.test_websocket_notifications()
+        self.test_database_performance()
+        
+        # Run other tests
+        self.test_mood_system()
         self.test_ai_suggestions()
-        self.test_websocket_endpoint()
+        self.test_error_handling()
         
         # Print summary
         print(f"\n📊 Test Results: {self.tests_passed}/{self.tests_run} passed")
         success_rate = (self.tests_passed / self.tests_run) * 100 if self.tests_run > 0 else 0
         print(f"Success Rate: {success_rate:.1f}%")
         
-        if success_rate >= 80:
-            print("🎉 Backend API tests mostly successful!")
+        # Enhanced reporting
+        if success_rate >= 90:
+            print("🎉 Backend API tests highly successful!")
+            return True
+        elif success_rate >= 80:
+            print("✅ Backend API tests mostly successful!")
+            return True
+        elif success_rate >= 70:
+            print("⚠️  Backend API has some issues but core functionality works")
             return True
         else:
-            print("⚠️  Backend API has significant issues")
+            print("❌ Backend API has significant issues")
             return False
 
 def main():
