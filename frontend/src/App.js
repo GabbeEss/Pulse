@@ -1306,7 +1306,7 @@ const TaskCard = ({ task, currentUser, onProofSubmit, onTaskApprove, onRefresh }
   );
 };
 
-// Enhanced TaskCreator Component  
+// Enhanced TaskCreator Component with Integrated Reward System
 const TaskCreator = ({ onTaskCreate }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -1346,7 +1346,10 @@ const TaskCreator = ({ onTaskCreate }) => {
 
   return (
     <div className="bg-black/20 backdrop-blur-lg rounded-2xl p-6 border border-white/10">
-      <h3 className="text-xl font-bold text-white mb-4">Create Heat Task</h3>
+      <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+        🎯 Create Heat Task
+        <span className="text-sm bg-pink-500/20 px-2 py-1 rounded text-pink-400">All-in-One</span>
+      </h3>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
@@ -1366,16 +1369,22 @@ const TaskCreator = ({ onTaskCreate }) => {
           required
         />
         
-        <input
-          type="text"
-          placeholder="Reward (optional)"
-          value={reward}
-          onChange={(e) => setReward(e.target.value)}
-          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500"
-        />
+        <div>
+          <label className="block text-gray-300 mb-2 font-semibold">
+            🎁 What will your partner get if they complete this?
+          </label>
+          <input
+            type="text"
+            placeholder="e.g., A sensual massage, your favorite meal, a special surprise..."
+            value={reward}
+            onChange={(e) => setReward(e.target.value)}
+            className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500"
+          />
+          <p className="text-xs text-gray-400 mt-1">Optional: Describe the real-world reward they'll get</p>
+        </div>
         
         <div>
-          <label className="block text-gray-300 mb-2">Duration: {duration} minutes</label>
+          <label className="block text-gray-300 mb-2">Duration: {duration} minutes ⏰</label>
           <input
             type="range"
             min="15"
@@ -1384,6 +1393,10 @@ const TaskCreator = ({ onTaskCreate }) => {
             onChange={(e) => setDuration(e.target.value)}
             className="w-full"
           />
+          <div className="flex justify-between text-xs text-gray-400 mt-1">
+            <span>15 min</span>
+            <span>4 hours</span>
+          </div>
         </div>
 
         <div>
@@ -1396,6 +1409,10 @@ const TaskCreator = ({ onTaskCreate }) => {
             onChange={(e) => setTokensEarned(e.target.value)}
             className="w-full"
           />
+          <div className="flex justify-between text-xs text-gray-400 mt-1">
+            <span>1 token</span>
+            <span>20 tokens</span>
+          </div>
         </div>
         
         <div className="flex gap-3">
@@ -1403,7 +1420,7 @@ const TaskCreator = ({ onTaskCreate }) => {
             type="submit"
             className="flex-1 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity"
           >
-            Create Task
+            Create Task & Reward
           </button>
           <button
             type="button"
