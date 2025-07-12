@@ -464,7 +464,7 @@ async def link_with_partner(request: PairingRequest, current_user: dict = Depend
                 {"id": {"$ne": current_user["id"]}},
                 {"$or": [{"couple_id": {"$exists": False}}, {"couple_id": None}]}
             ]
-        })
+        }, {"_id": 0})
         
         if not partner:
             raise HTTPException(status_code=404, detail="Partner not found with this code")
