@@ -1632,22 +1632,33 @@ const Dashboard = ({ user }) => {
           </div>
         </div>
 
-        {/* AI Suggestion Modal */}
+        {/* Enhanced AI Suggestion Modal */}
         {aiSuggestion && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="bg-black/90 backdrop-blur-lg rounded-2xl p-6 border border-white/10 max-w-sm w-full">
-              <h3 className="text-xl font-bold text-white mb-4">✨ AI Suggestion</h3>
-              <div className="space-y-3">
-                <h4 className="text-lg text-pink-400">{aiSuggestion.title}</h4>
-                <p className="text-gray-300">{aiSuggestion.description}</p>
-                <p className="text-sm text-gray-400">Duration: {aiSuggestion.default_duration_minutes} minutes</p>
+              <div className="text-center mb-4">
+                <h3 className="text-xl font-bold text-white mb-2 flex items-center justify-center gap-2">
+                  ✨ AI Mood Suggestion
+                </h3>
+                <p className="text-xs text-gray-400">Based on your current mood and intensity</p>
               </div>
+              
+              <div className="space-y-3">
+                <h4 className="text-lg text-pink-400 font-semibold">{aiSuggestion.title}</h4>
+                <p className="text-gray-300 text-sm leading-relaxed">{aiSuggestion.description}</p>
+                <div className="flex items-center justify-between text-xs text-gray-400 bg-white/10 rounded-lg p-2">
+                  <span>⏰ Duration: {aiSuggestion.default_duration_minutes} min</span>
+                  <span>🪙 Reward: 7 tokens</span>
+                </div>
+              </div>
+              
               <div className="flex gap-3 mt-6">
                 <button
                   onClick={() => {
                     handleTaskCreate({
                       title: aiSuggestion.title,
                       description: aiSuggestion.description,
+                      reward: "AI-suggested reward based on your mood",
                       duration_minutes: aiSuggestion.default_duration_minutes,
                       tokens_earned: 7
                     });
@@ -1664,6 +1675,10 @@ const Dashboard = ({ user }) => {
                   Skip
                 </button>
               </div>
+              
+              <p className="text-xs text-center text-gray-500 mt-3">
+                💡 AI suggestions are tailored to your mood and intensity
+              </p>
             </div>
           </div>
         )}
