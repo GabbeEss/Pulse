@@ -349,6 +349,8 @@ async def link_with_partner(request: PairingRequest, current_user: dict = Depend
         
         return {"message": "Successfully linked with partner", "couple_id": couple.id}
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error in pairing link: {str(e)}")
         raise HTTPException(status_code=500, detail="An error occurred while linking with partner")
