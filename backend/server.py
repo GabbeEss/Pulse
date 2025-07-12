@@ -709,7 +709,7 @@ async def get_tokens(current_user: dict = Depends(get_current_user)):
     user_tokens = await db.user_tokens.find_one({
         "user_id": current_user["id"], 
         "couple_id": current_user["couple_id"]
-    })
+    }, {"_id": 0})
     
     if not user_tokens:
         return {"tokens": 0, "lifetime_tokens": 0}
