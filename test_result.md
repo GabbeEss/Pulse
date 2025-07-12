@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Implement complete HeatTask creation, countdown timers, proof submission system with token rewards and real-time notifications"
+user_problem_statement: "Enhance Pulse app with expanded spicy mood system (including extreme mode), consolidate HeatTask creation with rewards, and add mood-triggered AI task suggestions for better intimacy expression"
 
 backend:
   - task: "Pairing System - Code Generation and Linking"
