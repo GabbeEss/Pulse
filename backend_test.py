@@ -250,14 +250,14 @@ class PulseAPITester:
             self.log_test("Task proof submission", success, str(response) if not success else "")
 
     def test_ai_suggestions(self):
-        """Test AI suggestion system"""
+        """Test AI suggestion system comprehensively"""
         print("\n🔍 Testing AI Suggestion System...")
         
         if not self.user1_token:
             self.log_test("AI suggestions", False, "Missing user token")
             return False
 
-        # Test AI suggestion endpoint with query parameters
+        # Test 1: Basic AI suggestion endpoint with query parameters
         endpoint = 'ai/suggest-task?mood_type=feeling_spicy&intensity=5'
         success, response = self.make_request('POST', endpoint, None, self.user1_token, expected_status=200)
         if success:
@@ -265,8 +265,92 @@ class PulseAPITester:
             has_description = 'description' in response
             has_duration = 'default_duration_minutes' in response
             self.log_test("AI suggestion structure", has_title and has_description and has_duration)
+            
+            # Check if response looks like AI-generated content (not mock)
+            title = response.get('title', '')
+            description = response.get('description', '')
+            is_likely_ai = len(description) > 50 and not any(mock_phrase in title.lower() for mock_phrase in ['cook naked', 'sensual massage', 'spicy voice', 'teasing photo'])
+            self.log_test("AI-generated content (not mock)", is_likely_ai, f"Title: {title[:50]}...")
         else:
             self.log_test("AI suggestion endpoint", False, str(response))
+
+        # Test 2: Different mood types and intensities
+        mood_test_cases = [
+            ("feeling_spicy", 1),
+            ("feeling_spicy", 3),
+            ("feeling_spicy", 5),
+            ("horny", 2),
+            ("horny", 4),
+            ("teasing", 1),
+            ("teasing", 5),
+            ("romantic", 3),
+            ("playful", 2)
+        ]
+        
+        ai_responses = []
+        for mood_type, intensity in mood_test_cases:
+            endpoint = f'ai/suggest-task?mood_type={mood_type}&intensity={intensity}'
+            success, response = self.make_request('POST', endpoint, None, self.user1_token, expected_status=200)
+            if success:
+                ai_responses.append(response)
+                self.log_test(f"AI suggestion for {mood_type} intensity {intensity}", True)
+            else:
+                self.log_test(f"AI suggestion for {mood_type} intensity {intensity}", False, str(response))
+
+        # Test 3: Verify response variety (AI should generate different responses)
+        if len(ai_responses) >= 3:
+            titles = [resp.get('title', '') for resp in ai_responses[:3]]
+            unique_titles = len(set(titles))
+            self.log_test("AI response variety", unique_titles >= 2, f"Got {unique_titles} unique titles from 3 requests")
+
+        # Test 4: Edge cases - invalid parameters
+        invalid_cases = [
+            ("invalid_mood", 3, "Invalid mood type"),
+            ("feeling_spicy", 0, "Invalid intensity (too low)"),
+            ("feeling_spicy", 6, "Invalid intensity (too high)"),
+            ("", 3, "Empty mood type")
+        ]
+        
+        for mood_type, intensity, test_name in invalid_cases:
+            endpoint = f'ai/suggest-task?mood_type={mood_type}&intensity={intensity}'
+            success, response = self.make_request('POST', endpoint, None, self.user1_token, expected_status=200)
+            # Even with invalid params, the endpoint should still return a response (fallback)
+            if success:
+                has_required_fields = all(key in response for key in ['title', 'description', 'default_duration_minutes'])
+                self.log_test(f"Fallback handling: {test_name}", has_required_fields)
+            else:
+                self.log_test(f"Fallback handling: {test_name}", False, str(response))
+
+        # Test 5: Performance test - AI suggestions should be reasonably fast
+        start_time = time.time()
+        endpoint = 'ai/suggest-task?mood_type=feeling_spicy&intensity=4'
+        success, response = self.make_request('POST', endpoint, None, self.user1_token, expected_status=200)
+        end_time = time.time()
+        
+        if success:
+            response_time = end_time - start_time
+            is_fast_enough = response_time < 15.0  # Should respond within 15 seconds
+            self.log_test("AI suggestion performance", is_fast_enough, f"Response time: {response_time:.2f}s")
+        else:
+            self.log_test("AI suggestion performance", False, "Request failed")
+
+        # Test 6: Integration with mood creation (verify AI suggestions are included)
+        mood_data = {
+            "mood_type": "feeling_spicy",
+            "intensity": 4,
+            "duration_minutes": 60
+        }
+        success, response = self.make_request('POST', 'moods', mood_data, self.user1_token, expected_status=200)
+        if success:
+            ai_suggestion = response.get('ai_suggestion')
+            has_ai_suggestion = ai_suggestion is not None
+            if has_ai_suggestion:
+                has_required_fields = all(key in ai_suggestion for key in ['title', 'description', 'default_duration_minutes'])
+                self.log_test("Mood creation includes AI suggestion", has_required_fields)
+            else:
+                self.log_test("Mood creation includes AI suggestion", False, "No AI suggestion in mood response")
+        else:
+            self.log_test("Mood creation with AI integration", False, str(response))
 
     def test_websocket_endpoint(self):
         """Test WebSocket endpoint availability"""
