@@ -549,7 +549,263 @@ const MoodSelector = ({ onMoodSelect }) => {
   );
 };
 
-const TaskCreator = ({ onTaskCreate }) => {
+// Enhanced Task Card Component
+const TaskCard = ({ task, currentUser, onProofSubmit, onTaskApprove, onRefresh }) => {
+  const [showProofModal, setShowProofModal] = useState(false);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [proofText, setProofText] = useState('');
+  const [proofPhoto, setProofPhoto] = useState(null);
+  const [approvalMessage, setApprovalMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const isCreator = task.creator_id === currentUser.id;
+  const isReceiver = task.receiver_id === currentUser.id;
+  const canSubmitProof = isReceiver && task.status === 'pending';
+  const canApprove = isCreator && task.status === 'completed';
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-500/20 text-yellow-400';
+      case 'completed': return 'bg-blue-500/20 text-blue-400';
+      case 'approved': return 'bg-green-500/20 text-green-400';
+      case 'rejected': return 'bg-red-500/20 text-red-400';
+      case 'expired': return 'bg-gray-500/20 text-gray-400';
+      default: return 'bg-gray-500/20 text-gray-400';
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'pending': return 'Pending';
+      case 'completed': return 'Awaiting Approval';
+      case 'approved': return 'Approved ✅';
+      case 'rejected': return 'Rejected ❌';
+      case 'expired': return 'Expired ⏰';
+      default: return status;
+    }
+  };
+
+  const handleProofSubmit = async () => {
+    if (!proofText && !proofPhoto) {
+      alert('Please provide either text or photo proof');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await onProofSubmit(task.id, {
+        proof_text: proofText,
+        proof_photo_base64: proofPhoto
+      });
+      setShowProofModal(false);
+      setProofText('');
+      setProofPhoto(null);
+      onRefresh();
+    } catch (error) {
+      console.error('Error submitting proof:', error);
+      alert('Failed to submit proof');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleApproval = async (approved) => {
+    setSubmitting(true);
+    try {
+      await onTaskApprove(task.id, {
+        approved,
+        message: approvalMessage
+      });
+      setShowApprovalModal(false);
+      setApprovalMessage('');
+      onRefresh();
+    } catch (error) {
+      console.error('Error approving task:', error);
+      alert('Failed to update task');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="bg-black/20 backdrop-blur-lg rounded-2xl p-6 border border-white/10">
+        <div className="flex items-start justify-between mb-3">
+          <h4 className="text-lg font-semibold text-white pr-2">{task.title}</h4>
+          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(task.status)}`}>
+            {getStatusText(task.status)}
+          </span>
+        </div>
+        
+        <p className="text-gray-300 mb-3">{task.description}</p>
+        
+        {task.reward && (
+          <p className="text-pink-400 mb-3">🎁 Reward: {task.reward}</p>
+        )}
+
+        <div className="flex items-center justify-between mb-4">
+          <TokenDisplay tokens={task.tokens_earned} size="small" />
+          <CountdownTimer 
+            expiresAt={task.expires_at} 
+            onExpired={() => onRefresh()}
+          />
+        </div>
+        
+        <div className="flex items-center justify-between text-sm text-gray-400 mb-4">
+          <span>{isCreator ? 'Created by you' : 'From your partner'}</span>
+          <span>{isReceiver ? 'Assigned to you' : 'Assigned to partner'}</span>
+        </div>
+
+        {/* Proof Display */}
+        {task.proof_text && (
+          <div className="mb-4 p-3 bg-white/10 rounded-xl">
+            <p className="text-gray-300 text-sm mb-2">📝 Proof:</p>
+            <p className="text-white">{task.proof_text}</p>
+          </div>
+        )}
+
+        {task.proof_photo_base64 && (
+          <div className="mb-4">
+            <p className="text-gray-300 text-sm mb-2">📸 Photo Proof:</p>
+            <img 
+              src={task.proof_photo_base64} 
+              alt="Task proof" 
+              className="w-full h-32 object-cover rounded-xl"
+            />
+          </div>
+        )}
+
+        {/* Approval Message */}
+        {task.approval_message && (
+          <div className="mb-4 p-3 bg-white/10 rounded-xl">
+            <p className="text-gray-300 text-sm mb-2">
+              {task.status === 'approved' ? '✅ Approval Message:' : '❌ Rejection Message:'}
+            </p>
+            <p className="text-white">{task.approval_message}</p>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          {canSubmitProof && (
+            <button
+              onClick={() => setShowProofModal(true)}
+              className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white py-2 px-4 rounded-xl font-semibold hover:opacity-90 transition-opacity"
+            >
+              Submit Proof
+            </button>
+          )}
+
+          {canApprove && (
+            <button
+              onClick={() => setShowApprovalModal(true)}
+              className="flex-1 bg-gradient-to-r from-green-500 to-blue-500 text-white py-2 px-4 rounded-xl font-semibold hover:opacity-90 transition-opacity"
+            >
+              Review Proof
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Proof Submission Modal */}
+      {showProofModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-black/90 backdrop-blur-lg rounded-2xl p-6 border border-white/10 max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-bold text-white mb-4">Submit Proof</h3>
+            <div className="space-y-4">
+              <textarea
+                placeholder="Describe what you did..."
+                value={proofText}
+                onChange={(e) => setProofText(e.target.value)}
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 h-24 resize-none"
+              />
+              
+              <PhotoUpload 
+                onPhotoSelected={setProofPhoto}
+                existingPhoto={proofPhoto}
+              />
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={handleProofSubmit}
+                  disabled={submitting || (!proofText && !proofPhoto)}
+                  className="flex-1 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  {submitting ? 'Submitting...' : 'Submit Proof'}
+                </button>
+                <button
+                  onClick={() => setShowProofModal(false)}
+                  disabled={submitting}
+                  className="px-6 py-3 bg-white/10 border border-white/20 rounded-xl text-gray-300 hover:bg-white/20 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Approval Modal */}
+      {showApprovalModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-black/90 backdrop-blur-lg rounded-2xl p-6 border border-white/10 max-w-md w-full">
+            <h3 className="text-xl font-bold text-white mb-4">Review Task Proof</h3>
+            
+            {task.proof_text && (
+              <div className="mb-4 p-3 bg-white/10 rounded-xl">
+                <p className="text-gray-300 text-sm mb-2">📝 Their proof:</p>
+                <p className="text-white">{task.proof_text}</p>
+              </div>
+            )}
+
+            {task.proof_photo_base64 && (
+              <div className="mb-4">
+                <p className="text-gray-300 text-sm mb-2">📸 Photo proof:</p>
+                <img 
+                  src={task.proof_photo_base64} 
+                  alt="Task proof" 
+                  className="w-full h-40 object-cover rounded-xl"
+                />
+              </div>
+            )}
+
+            <textarea
+              placeholder="Add a message (optional)..."
+              value={approvalMessage}
+              onChange={(e) => setApprovalMessage(e.target.value)}
+              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 h-20 resize-none mb-4"
+            />
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleApproval(true)}
+                disabled={submitting}
+                className="flex-1 bg-gradient-to-r from-green-500 to-blue-500 text-white py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {submitting ? 'Processing...' : '✅ Approve'}
+              </button>
+              <button
+                onClick={() => handleApproval(false)}
+                disabled={submitting}
+                className="flex-1 bg-gradient-to-r from-red-500 to-orange-500 text-white py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {submitting ? 'Processing...' : '❌ Reject'}
+              </button>
+              <button
+                onClick={() => setShowApprovalModal(false)}
+                disabled={submitting}
+                className="px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-gray-300 hover:bg-white/20 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [reward, setReward] = useState('');
