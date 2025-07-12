@@ -293,41 +293,46 @@ async def link_with_partner(request: PairingRequest, current_user: dict = Depend
     if current_user.get("couple_id"):
         raise HTTPException(status_code=400, detail="Already linked with a partner")
     
-    # Find user with matching pairing code (last 6 characters of their ID)
-    all_users = await db.users.find({"couple_id": {"$exists": False}}).to_list(1000)
-    
-    partner = None
-    for user in all_users:
-        if user["id"] != current_user["id"] and user["id"][-6:].upper() == request.pairing_code:
-            partner = user
-            break
-    
-    if not partner:
-        raise HTTPException(status_code=404, detail="Partner not found with this code")
-    
-    if partner.get("couple_id"):
-        raise HTTPException(status_code=400, detail="Partner already linked with someone else")
-    
-    # Create couple
-    couple = Couple(
-        user1_id=current_user["id"],
-        user2_id=partner["id"],
-        pairing_code=request.pairing_code
-    )
-    
-    await db.couples.insert_one(couple.dict())
-    
-    # Update both users
-    await db.users.update_one(
-        {"id": current_user["id"]},
-        {"$set": {"couple_id": couple.id}}
-    )
-    await db.users.update_one(
-        {"id": partner["id"]},
-        {"$set": {"couple_id": couple.id}}
-    )
-    
-    return {"message": "Successfully linked with partner", "couple_id": couple.id}
+    # Optimized: Use MongoDB regex query to find user with matching pairing code directly
+    # This eliminates the need to fetch 1000+ users and do Python linear search
+    try:
+        partner = await db.users.find_one({
+            "id": {"$regex": f".*{request.pairing_code.lower()}$", "$options": "i"},
+            "id": {"$ne": current_user["id"]},
+            "couple_id": {"$exists": False}
+        })
+        
+        if not partner:
+            raise HTTPException(status_code=404, detail="Partner not found with this code")
+        
+        # Double-check that the pairing code matches the last 6 characters
+        if partner["id"][-6:].upper() != request.pairing_code.upper():
+            raise HTTPException(status_code=404, detail="Partner not found with this code")
+        
+        # Create couple
+        couple = Couple(
+            user1_id=current_user["id"],
+            user2_id=partner["id"],
+            pairing_code=request.pairing_code.upper()
+        )
+        
+        await db.couples.insert_one(couple.dict())
+        
+        # Update both users atomically
+        await db.users.update_one(
+            {"id": current_user["id"]},
+            {"$set": {"couple_id": couple.id}}
+        )
+        await db.users.update_one(
+            {"id": partner["id"]},
+            {"$set": {"couple_id": couple.id}}
+        )
+        
+        return {"message": "Successfully linked with partner", "couple_id": couple.id}
+        
+    except Exception as e:
+        logger.error(f"Error in pairing link: {str(e)}")
+        raise HTTPException(status_code=500, detail="An error occurred while linking with partner")
 
 # Mood routes
 @api_router.post("/moods")
