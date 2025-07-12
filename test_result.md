@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Pulse app backend timeout issue in pairing system - need to optimize pairing code lookup and resolve 500 errors"
+user_problem_statement: "Implement complete HeatTask creation, countdown timers, proof submission system with token rewards and real-time notifications"
 
 backend:
   - task: "Pairing System - Code Generation and Linking"
