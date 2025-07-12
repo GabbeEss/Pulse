@@ -1728,17 +1728,36 @@ const Dashboard = ({ user }) => {
               
               {moods.length > 0 && (
                 <div className="bg-black/20 backdrop-blur-lg rounded-2xl p-6 border border-white/10">
-                  <h3 className="text-xl font-bold text-white mb-4">Recent Moods</h3>
+                  <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    💭 Recent Moods
+                    <span className="text-xs bg-pink-500/20 px-2 py-1 rounded text-pink-400">Live</span>
+                  </h3>
                   <div className="space-y-3">
-                    {moods.map((mood) => (
-                      <div key={mood.id} className="flex items-center justify-between p-3 bg-white/10 rounded-xl">
-                        <div>
-                          <span className="text-white font-semibold">{mood.mood_type.replace('_', ' ')}</span>
-                          <span className="text-gray-300 ml-2">Intensity: {mood.intensity}/5</span>
+                    {moods.map((mood) => {
+                      const moodName = mood.mood_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                      const isExplicit = ['Available For Use', 'Feeling Submissive', 'Wanna Edge', 'Use Me How You Want', 'Bratty Mood', 'Worship Me'].includes(moodName);
+                      
+                      return (
+                        <div key={mood.id} className="flex items-center justify-between p-3 bg-white/10 rounded-xl">
+                          <div className="flex items-center gap-3">
+                            <div className="flex flex-col">
+                              <div className="flex items-center gap-2">
+                                <span className="text-white font-semibold">{moodName}</span>
+                                {isExplicit && (
+                                  <span className="text-xs bg-red-500/20 px-1.5 py-0.5 rounded text-red-400">
+                                    Spicy
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 text-sm text-gray-300">
+                                <span>🔥 Intensity: {mood.intensity}/5</span>
+                              </div>
+                            </div>
+                          </div>
+                          <span className="text-gray-400 text-sm">{formatTimeRemaining(mood.expires_at)}</span>
                         </div>
-                        <span className="text-gray-400 text-sm">{formatTimeRemaining(mood.expires_at)}</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
