@@ -288,6 +288,7 @@ async def get_ai_suggestion(mood_type: str, intensity: int, boundaries: List[str
         
         # Create LLM chat instance with enhanced system message
         mood_context = get_mood_context(mood_type, is_extreme_mode)
+        mood_prompt_intent = get_mood_prompt_intent(mood_type, is_extreme_mode)
         
         chat = LlmChat(
             api_key=openai_api_key,
@@ -295,18 +296,20 @@ async def get_ai_suggestion(mood_type: str, intensity: int, boundaries: List[str
             system_message=f"""You are an AI intimacy coach for the Pulse app, helping couples create playful and intimate connection through personalized HeatTasks. 
 
 Current mood context: {mood_context}
+Task creation intent: {mood_prompt_intent}
 
 Guidelines:
 - Generate creative, age-appropriate intimate tasks for adult couples (18+)
 - Tasks should build emotional and physical intimacy based on the current mood
 - Respect user boundaries and comfort levels strictly
 - Tasks can range from playful to sensual based on mood intensity and extreme mode setting
-- Include clear, actionable instructions
+- Include clear, actionable instructions that match the mood intent exactly
 - Suggest realistic timeframes (15-90 minutes)
 - Focus on connection, communication, and fun
-- Keep content tasteful yet expressive
+- Keep content tasteful yet expressive for the mood context
 - For kink/BDSM moods, emphasize safety, consent, and communication
 - Adjust explicitness based on extreme mode setting
+- Make sure the task directly relates to and fulfills the specific mood intent
 
 Response format should be valid JSON with: title, description, default_duration_minutes"""
         ).with_model("openai", "gpt-4o").with_max_tokens(500)
@@ -318,11 +321,18 @@ Response format should be valid JSON with: title, description, default_duration_
         user_prompt = f"""Generate a personalized HeatTask for a couple with these details:
 - Current mood: {mood_type}
 - Mood context: {mood_context}
+- Task intent: {mood_prompt_intent}
 - Intensity level: {intensity}/5
 - Boundaries to respect: {boundaries_text}
 - Content level: {extreme_context}
 
-Please suggest an intimate task that matches their current mood and intensity level. The task should be engaging, fun, and appropriate for their boundaries and selected content level."""
+IMPORTANT: The task must directly fulfill the mood intent. For example:
+- If mood is "wanna_edge", create an edging/teasing task with delayed gratification
+- If mood is "feeling_submissive", create a task where they serve or please their partner
+- If mood is "use_me_how_you_want", create a dominant/submissive power exchange task
+- If mood is "worship_me", create a task where they are adored and treated special
+
+Please suggest an intimate task that matches their current mood intent exactly. The task should be engaging, fun, and appropriate for their boundaries and selected content level."""
         
         user_message = UserMessage(text=user_prompt)
         
