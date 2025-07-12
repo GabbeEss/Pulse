@@ -596,7 +596,7 @@ async def get_tasks(current_user: dict = Depends(get_current_user)):
 
 @api_router.patch("/tasks/{task_id}/proof")
 async def submit_proof(task_id: str, proof: TaskProof, current_user: dict = Depends(get_current_user)):
-    task = await db.tasks.find_one({"id": task_id})
+    task = await db.tasks.find_one({"id": task_id}, {"_id": 0})
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     
