@@ -197,8 +197,79 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid authentication credentials")
 
+# OpenAI integration for AI suggestions
+from emergentintegrations.llm.chat import LlmChat, UserMessage
+
 # Mock AI suggestion function
 async def get_ai_suggestion(mood_type: str, intensity: int, boundaries: List[str]) -> dict:
+    """
+    Generate AI-powered HeatTask suggestions using OpenAI GPT-4o
+    """
+    try:
+        # Get OpenAI API key from environment
+        openai_api_key = os.environ.get('OPENAI_API_KEY')
+        if not openai_api_key:
+            logger.warning("OpenAI API key not found, falling back to mock suggestions")
+            return get_mock_ai_suggestion(mood_type, intensity, boundaries)
+        
+        # Create LLM chat instance
+        chat = LlmChat(
+            api_key=openai_api_key,
+            session_id=f"heat_task_{datetime.utcnow().isoformat()}",
+            system_message="""You are an AI intimacy coach for the Pulse app, helping couples create playful and intimate connection through personalized HeatTasks. 
+
+Guidelines:
+- Generate creative, age-appropriate intimate tasks for adult couples
+- Tasks should build emotional and physical intimacy
+- Respect user boundaries and comfort levels
+- Tasks can range from playful to sensual based on mood intensity
+- Include clear, actionable instructions
+- Suggest realistic timeframes (15-90 minutes)
+- Focus on connection, communication, and fun
+- Keep content tasteful and respectful
+
+Response format should be valid JSON with: title, description, default_duration_minutes"""
+        ).with_model("openai", "gpt-4o").with_max_tokens(500)
+        
+        # Prepare user message with context
+        boundaries_text = ", ".join(boundaries) if boundaries else "No specific boundaries set"
+        user_prompt = f"""Generate a personalized HeatTask for a couple with these details:
+- Current mood: {mood_type}
+- Intensity level: {intensity}/5
+- Boundaries to respect: {boundaries_text}
+
+Please suggest an intimate task that matches their current mood and intensity level. The task should be engaging, fun, and appropriate for their boundaries."""
+        
+        user_message = UserMessage(text=user_prompt)
+        
+        # Get AI response
+        response = await chat.send_message(user_message)
+        
+        # Try to parse as JSON, fallback to mock if parsing fails
+        try:
+            import json
+            ai_suggestion = json.loads(response)
+            
+            # Validate required fields
+            if all(key in ai_suggestion for key in ['title', 'description', 'default_duration_minutes']):
+                logger.info(f"AI suggestion generated successfully for mood: {mood_type}")
+                return ai_suggestion
+            else:
+                logger.warning("AI response missing required fields, using mock suggestion")
+                return get_mock_ai_suggestion(mood_type, intensity, boundaries)
+                
+        except json.JSONDecodeError:
+            logger.warning("Could not parse AI response as JSON, using mock suggestion")
+            return get_mock_ai_suggestion(mood_type, intensity, boundaries)
+            
+    except Exception as e:
+        logger.error(f"Error getting AI suggestion: {str(e)}")
+        return get_mock_ai_suggestion(mood_type, intensity, boundaries)
+
+def get_mock_ai_suggestion(mood_type: str, intensity: int, boundaries: List[str]) -> dict:
+    """
+    Fallback mock suggestions when AI is unavailable
+    """
     suggestions = [
         {
             "title": "Cook naked with your apron on",
