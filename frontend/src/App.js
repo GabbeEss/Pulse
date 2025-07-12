@@ -1295,9 +1295,21 @@ const TaskCard = ({ task, currentUser, onProofSubmit, onTaskApprove, onRefresh }
           />
         </div>
         
-        <div className="flex items-center justify-between text-sm text-gray-400 mb-4">
-          <span>{isCreator ? 'Created by you' : 'From your partner'}</span>
-          <span>{isReceiver ? 'Assigned to you' : 'Assigned to partner'}</span>
+        <div className="flex items-center justify-between text-sm mb-4">
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            isCreator 
+              ? 'bg-blue-500/20 text-blue-400 border border-blue-400/30' 
+              : 'bg-purple-500/20 text-purple-400 border border-purple-400/30'
+          }`}>
+            {isCreator ? '👤 Created by you' : '📩 From your partner'}
+          </span>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            isReceiver 
+              ? 'bg-green-500/20 text-green-400 border border-green-400/30' 
+              : 'bg-orange-500/20 text-orange-400 border border-orange-400/30'
+          }`}>
+            {isReceiver ? '🎯 Assigned to you' : '📤 Assigned to partner'}
+          </span>
         </div>
 
         {/* Proof Display */}
