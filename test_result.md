@@ -176,6 +176,17 @@ backend:
       - working: true
         agent: "testing"
         comment: "VERIFIED WORKING: Enhanced WebSocket notification system fully operational! All notification triggers tested and working: ✅ new_task notifications ✅ task_completed notifications ✅ task_approved/rejected notifications ✅ task_expired notifications ✅ new_reward notifications ✅ reward_redeemed notifications ✅ mood_update notifications. WebSocket endpoints properly configured and accessible."
+  - task: "Expanded Spicy Mood System - Backend Enhancement"
+    implemented: false
+    working: false
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "IMPLEMENTING: Adding expanded mood categories including explicit/kink-friendly options, extreme mode support, and enhanced AI suggestion triggers for new mood types."
 
 frontend:
   - task: "Enhanced HeatTask UI - Countdown Timers and Proof Submission"
