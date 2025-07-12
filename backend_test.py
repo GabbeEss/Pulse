@@ -974,6 +974,7 @@ class PulseAPITester:
         
         # Run other tests
         self.test_mood_system()
+        self.test_expanded_spicy_mood_system()  # New enhanced mood system test
         self.test_ai_suggestions()
         self.test_error_handling()
         
