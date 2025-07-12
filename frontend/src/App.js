@@ -1754,7 +1754,21 @@ const Dashboard = ({ user }) => {
 
           {activeTab === 'rewards' && (
             <div className="space-y-6">
-              <RewardCreator onRewardCreate={handleRewardCreate} />
+              {/* Info about integrated rewards */}
+              <div className="bg-black/20 backdrop-blur-lg rounded-2xl p-6 border border-white/10 border-dashed">
+                <div className="text-center">
+                  <h3 className="text-lg font-bold text-white mb-2 flex items-center justify-center gap-2">
+                    🎁 Rewards are now part of Heat Tasks!
+                  </h3>
+                  <p className="text-gray-300 text-sm mb-3">
+                    Create rewards directly when making Heat Tasks for a seamless experience.
+                  </p>
+                  <div className="flex items-center justify-center gap-2 text-xs text-pink-400">
+                    <span>💡</span>
+                    <span>Go to the Tasks tab to create task + reward combos</span>
+                  </div>
+                </div>
+              </div>
               
               {availableRewards.length > 0 && (
                 <div className="space-y-4">
@@ -1783,6 +1797,22 @@ const Dashboard = ({ user }) => {
                       isRedeemable={false}
                     />
                   ))}
+                </div>
+              )}
+
+              {availableRewards.length === 0 && redeemedRewards.length === 0 && (
+                <div className="bg-black/20 backdrop-blur-lg rounded-2xl p-8 border border-white/10 text-center">
+                  <div className="text-4xl mb-3">🎯</div>
+                  <h3 className="text-lg font-bold text-white mb-2">No rewards yet!</h3>
+                  <p className="text-gray-300 text-sm mb-4">
+                    Create Heat Tasks with rewards attached to start earning and redeeming.
+                  </p>
+                  <button
+                    onClick={() => setActiveTab('tasks')}
+                    className="bg-gradient-to-r from-pink-500 to-purple-500 text-white py-2 px-4 rounded-xl font-semibold hover:opacity-90 transition-opacity"
+                  >
+                    Create First Task
+                  </button>
                 </div>
               )}
             </div>
