@@ -271,9 +271,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Enhanced HeatTask UI - Countdown Timers and Proof Submission"
-    - "Token Bank and Rewards UI"
-    - "Enhanced Real-time Notifications - Frontend"
+    - "Expanded Spicy Mood System - Backend Enhancement"
+    - "Expanded Spicy Mood System - Frontend UI"
+    - "Integrated Task/Reward Creation - Frontend UX"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
