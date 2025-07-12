@@ -1268,7 +1268,19 @@ const TaskCard = ({ task, currentUser, onProofSubmit, onTaskApprove, onRefresh, 
     }
   };
 
-  const handleApproval = async (approved) => {
+  const handleDelete = async () => {
+    setSubmitting(true);
+    try {
+      await onTaskDelete(task.id);
+      setShowDeleteModal(false);
+      onRefresh();
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      alert('Failed to delete task');
+    } finally {
+      setSubmitting(false);
+    }
+  };
     setSubmitting(true);
     try {
       await onTaskApprove(task.id, {
