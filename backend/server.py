@@ -605,10 +605,11 @@ async def create_mood(mood: MoodCreate, current_user: dict = Depends(get_current
         "mood": mood_obj.dict()
     })
     
-    # If spicy mood, suggest AI task
+    # If spicy mood or explicit mood, suggest AI task
     suggestion = None
-    if mood.mood_type in ["feeling_spicy", "horny", "teasing"]:
-        suggestion = await get_ai_suggestion(mood.mood_type, mood.intensity, current_user.get("boundaries", []))
+    spicy_moods = ["feeling_spicy", "horny", "teasing", "available_for_use", "feeling_submissive", "wanna_edge", "use_me_how_you_want", "feeling_dominant", "need_attention", "bratty_mood", "worship_me"]
+    if mood.mood_type in spicy_moods:
+        suggestion = await get_ai_suggestion(mood.mood_type, mood.intensity, current_user.get("boundaries", []), mood.is_extreme_mode)
     
     return {"mood": mood_obj.dict(), "ai_suggestion": suggestion}
 
