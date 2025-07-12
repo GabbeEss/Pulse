@@ -122,6 +122,17 @@ backend:
       - working: true
         agent: "testing"
         comment: "VERIFIED: All pairing endpoints working perfectly with no timeouts. Performance testing confirms operations complete in <1 second vs previous timeouts. Testing agent made additional optimizations for MongoDB query and logging during comprehensive testing."
+  - task: "OpenAI Integration for AI-Suggested HeatTasks"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "IMPLEMENTED: Replaced mock AI suggestion function with OpenAI GPT-4o integration using emergentintegrations library. Added proper error handling and fallback to mock suggestions. Configured system message for intimacy coaching context. API key added to environment."
 
 frontend:
   - task: "Pairing UI Integration"
