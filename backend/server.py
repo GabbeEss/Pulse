@@ -607,7 +607,11 @@ async def submit_proof(task_id: str, proof: TaskProof, current_user: dict = Depe
         raise HTTPException(status_code=400, detail="Task is not pending")
     
     # Check if task has expired
-    if datetime.utcnow() > datetime.fromisoformat(task["expires_at"].replace("Z", "+00:00")):
+    expires_at = task["expires_at"]
+    if isinstance(expires_at, str):
+        expires_at = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
+    
+    if datetime.utcnow() > expires_at:
         # Mark as expired
         await db.tasks.update_one(
             {"id": task_id},
