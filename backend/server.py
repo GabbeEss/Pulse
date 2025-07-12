@@ -872,7 +872,7 @@ async def check_task_expiry(current_user: dict = Depends(get_current_user)):
         "couple_id": current_user["couple_id"],
         "status": "pending",
         "expires_at": {"$lt": datetime.utcnow()}
-    }).to_list(100)
+    }, {"_id": 0}).to_list(100)
     
     expired_count = 0
     for task in expired_tasks:
