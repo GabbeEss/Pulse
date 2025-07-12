@@ -316,12 +316,11 @@ async def link_with_partner(request: PairingRequest, current_user: dict = Depend
     # This eliminates the need to fetch 1000+ users and do Python linear search
     try:
         partner = await db.users.find_one({
-            "id": {
-                "$regex": f".*{request.pairing_code.lower()}$", 
-                "$options": "i",
-                "$ne": current_user["id"]
-            },
-            "couple_id": {"$exists": False}
+            "$and": [
+                {"id": {"$regex": f".*{request.pairing_code.lower()}$", "$options": "i"}},
+                {"id": {"$ne": current_user["id"]}},
+                {"couple_id": {"$exists": False}}
+            ]
         })
         
         if not partner:
