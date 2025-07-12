@@ -269,23 +269,35 @@ async def login(user: UserLogin):
 
 @api_router.get("/pairing/code")
 async def get_pairing_code(current_user: dict = Depends(get_current_user)):
-    if current_user.get("couple_id"):
-        raise HTTPException(status_code=400, detail="Already linked with a partner")
-    
-    # Generate a simple pairing code based on user ID
-    pairing_code = current_user["id"][-6:].upper()  # Use last 6 characters of user ID
-    
-    return {"pairing_code": pairing_code}
+    try:
+        if current_user.get("couple_id"):
+            raise HTTPException(status_code=400, detail="Already linked with a partner")
+        
+        # Generate a simple pairing code based on user ID
+        pairing_code = current_user["id"][-6:].upper()  # Use last 6 characters of user ID
+        
+        return {"pairing_code": pairing_code}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting pairing code: {str(e)}")
+        raise HTTPException(status_code=500, detail="An error occurred while getting pairing code")
 
 @api_router.post("/pairing/generate")
 async def generate_pairing_code_endpoint(current_user: dict = Depends(get_current_user)):
-    if current_user.get("couple_id"):
-        raise HTTPException(status_code=400, detail="Already linked with a partner")
-    
-    # Generate a simple pairing code based on user ID
-    pairing_code = current_user["id"][-6:].upper()  # Use last 6 characters of user ID
-    
-    return {"pairing_code": pairing_code, "message": "Pairing code generated"}
+    try:
+        if current_user.get("couple_id"):
+            raise HTTPException(status_code=400, detail="Already linked with a partner")
+        
+        # Generate a simple pairing code based on user ID
+        pairing_code = current_user["id"][-6:].upper()  # Use last 6 characters of user ID
+        
+        return {"pairing_code": pairing_code, "message": "Pairing code generated"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating pairing code: {str(e)}")
+        raise HTTPException(status_code=500, detail="An error occurred while generating pairing code")
 
 # Pairing routes
 @api_router.post("/pairing/link")
