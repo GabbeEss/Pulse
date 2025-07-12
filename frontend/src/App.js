@@ -781,35 +781,269 @@ const PairingScreen = ({ user }) => {
 };
 
 const MoodSelector = ({ onMoodSelect }) => {
-  const moods = [
-    { id: 'feeling_spicy', name: 'Feeling Spicy', emoji: '🌶️', color: 'from-red-500 to-orange-500' },
-    { id: 'horny', name: 'Horny', emoji: '🔥', color: 'from-orange-500 to-red-500' },
-    { id: 'teasing', name: 'Teasing', emoji: '😈', color: 'from-purple-500 to-pink-500' },
-    { id: 'romantic', name: 'Romantic', emoji: '💕', color: 'from-pink-500 to-purple-500' },
-    { id: 'playful', name: 'Playful', emoji: '😏', color: 'from-blue-500 to-purple-500' },
-    { id: 'unavailable', name: 'Unavailable', emoji: '🚫', color: 'from-gray-500 to-gray-600' },
-  ];
-
   const [selectedMood, setSelectedMood] = useState(null);
   const [intensity, setIntensity] = useState(3);
+  const [extremeMode, setExtremeMode] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(null);
+
+  // Regular moods - always visible
+  const regularMoods = [
+    { 
+      id: 'feeling_spicy', 
+      name: 'Feeling Spicy', 
+      emoji: '🌶️', 
+      color: 'from-red-500 to-orange-500',
+      description: 'Ready to add some heat and adventure to your connection'
+    },
+    { 
+      id: 'horny', 
+      name: 'Horny', 
+      emoji: '🔥', 
+      color: 'from-orange-500 to-red-500',
+      description: 'Sexually aroused and craving intimate physical connection'
+    },
+    { 
+      id: 'teasing', 
+      name: 'Teasing', 
+      emoji: '😈', 
+      color: 'from-purple-500 to-pink-500',
+      description: 'Playful and flirtatious, enjoying building anticipation'
+    },
+    { 
+      id: 'romantic', 
+      name: 'Romantic', 
+      emoji: '💕', 
+      color: 'from-pink-500 to-purple-500',
+      description: 'Seeking emotional intimacy and romantic connection'
+    },
+    { 
+      id: 'playful', 
+      name: 'Playful', 
+      emoji: '😏', 
+      color: 'from-blue-500 to-purple-500',
+      description: 'Fun and lighthearted, wanting joy and laughter'
+    },
+    { 
+      id: 'unavailable', 
+      name: 'Unavailable', 
+      emoji: '🚫', 
+      color: 'from-gray-500 to-gray-600',
+      description: 'Not in the mood for intimate activities right now'
+    },
+  ];
+
+  // Spicy moods - always visible but marked as spicy
+  const spicyMoods = [
+    { 
+      id: 'feeling_dominant', 
+      name: 'Feeling Dominant', 
+      emoji: '👑', 
+      color: 'from-purple-600 to-indigo-600',
+      description: 'Want to take charge and lead the intimate experience'
+    },
+    { 
+      id: 'need_attention', 
+      name: 'Need Attention', 
+      emoji: '🥺', 
+      color: 'from-pink-600 to-red-500',
+      description: 'Craving focused attention and adoration from your lover'
+    },
+  ];
+
+  // Extreme moods - only visible when extreme mode is enabled
+  const extremeMoods = [
+    { 
+      id: 'available_for_use', 
+      name: 'Available for Use', 
+      emoji: '🎯', 
+      color: 'from-red-600 to-pink-600',
+      description: 'Offering yourself for your partner\'s pleasure and desires'
+    },
+    { 
+      id: 'feeling_submissive', 
+      name: 'Feeling Submissive', 
+      emoji: '🙇', 
+      color: 'from-purple-600 to-pink-600',
+      description: 'In a submissive headspace, wanting to please your dominant'
+    },
+    { 
+      id: 'wanna_edge', 
+      name: 'Wanna Edge', 
+      emoji: '⏳', 
+      color: 'from-blue-600 to-purple-600',
+      description: 'Want to experience prolonged arousal and delayed gratification'
+    },
+    { 
+      id: 'use_me_how_you_want', 
+      name: 'Use Me How You Want', 
+      emoji: '🎪', 
+      color: 'from-red-600 to-orange-600',
+      description: 'Giving full consent for your partner to take complete control'
+    },
+    { 
+      id: 'bratty_mood', 
+      name: 'Bratty Mood', 
+      emoji: '😤', 
+      color: 'from-pink-600 to-purple-600',
+      description: 'Feeling mischievous and wanting to playfully challenge your partner'
+    },
+    { 
+      id: 'worship_me', 
+      name: 'Worship Me', 
+      emoji: '👸', 
+      color: 'from-yellow-500 to-red-500',
+      description: 'Want to be adored, praised, and treated like royalty'
+    },
+  ];
 
   const handleMoodSelect = (mood) => {
     setSelectedMood(mood);
-    onMoodSelect(mood, intensity);
+    onMoodSelect(mood, intensity, extremeMode);
   };
 
+  const allMoods = [...regularMoods, ...spicyMoods, ...(extremeMode ? extremeMoods : [])];
+
   return (
-    <div className="grid grid-cols-2 gap-4">
-      {moods.map((mood) => (
+    <div className="space-y-4">
+      {/* Extreme Mode Toggle */}
+      <div className="flex items-center justify-between bg-black/30 rounded-xl p-3">
+        <div>
+          <span className="text-white font-semibold">Extreme Mode</span>
+          <p className="text-gray-400 text-xs">Unlock more explicit mood options</p>
+        </div>
         <button
-          key={mood.id}
-          onClick={() => handleMoodSelect(mood)}
-          className={`p-4 rounded-2xl bg-gradient-to-br ${mood.color} text-white hover:scale-105 transition-transform duration-200 shadow-lg`}
+          onClick={() => setExtremeMode(!extremeMode)}
+          className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${
+            extremeMode ? 'bg-red-500' : 'bg-gray-600'
+          }`}
         >
-          <div className="text-3xl mb-2">{mood.emoji}</div>
-          <div className="font-semibold">{mood.name}</div>
+          <div
+            className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 ${
+              extremeMode ? 'translate-x-6' : 'translate-x-0.5'
+            }`}
+          />
         </button>
-      ))}
+      </div>
+
+      {/* Intensity Slider */}
+      <div className="bg-black/20 rounded-xl p-4">
+        <label className="block text-gray-300 mb-2 font-semibold">
+          Intensity: {intensity}/5 🔥
+        </label>
+        <input
+          type="range"
+          min="1"
+          max="5"
+          value={intensity}
+          onChange={(e) => setIntensity(e.target.value)}
+          className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+        />
+      </div>
+
+      {/* Regular Moods */}
+      <div>
+        <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
+          💭 How are you feeling?
+        </h4>
+        <div className="grid grid-cols-2 gap-3">
+          {regularMoods.map((mood) => (
+            <div
+              key={mood.id}
+              className="relative"
+              onMouseEnter={() => setShowTooltip(mood.id)}
+              onMouseLeave={() => setShowTooltip(null)}
+            >
+              <button
+                onClick={() => handleMoodSelect(mood)}
+                className={`w-full p-4 rounded-2xl bg-gradient-to-br ${mood.color} text-white hover:scale-105 transition-all duration-200 shadow-lg relative`}
+              >
+                <div className="text-2xl mb-2">{mood.emoji}</div>
+                <div className="font-semibold text-sm">{mood.name}</div>
+              </button>
+              
+              {/* Tooltip */}
+              {showTooltip === mood.id && (
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-black/90 text-white text-xs rounded-lg p-2 max-w-48 z-10">
+                  {mood.description}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black/90"></div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Spicy Moods */}
+      <div>
+        <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
+          🌶️ Spicy Vibes
+        </h4>
+        <div className="grid grid-cols-2 gap-3">
+          {spicyMoods.map((mood) => (
+            <div
+              key={mood.id}
+              className="relative"
+              onMouseEnter={() => setShowTooltip(mood.id)}
+              onMouseLeave={() => setShowTooltip(null)}
+            >
+              <button
+                onClick={() => handleMoodSelect(mood)}
+                className={`w-full p-4 rounded-2xl bg-gradient-to-br ${mood.color} text-white hover:scale-105 transition-all duration-200 shadow-lg relative`}
+              >
+                <div className="text-2xl mb-2">{mood.emoji}</div>
+                <div className="font-semibold text-sm">{mood.name}</div>
+              </button>
+              
+              {/* Tooltip */}
+              {showTooltip === mood.id && (
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-black/90 text-white text-xs rounded-lg p-2 max-w-48 z-10">
+                  {mood.description}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black/90"></div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Extreme Moods - Only visible when extreme mode is enabled */}
+      {extremeMode && (
+        <div>
+          <h4 className="text-red-400 font-semibold mb-3 flex items-center gap-2">
+            🔥 Extreme Mode
+            <span className="text-xs bg-red-500/20 px-2 py-1 rounded">18+</span>
+          </h4>
+          <div className="grid grid-cols-2 gap-3">
+            {extremeMoods.map((mood) => (
+              <div
+                key={mood.id}
+                className="relative"
+                onMouseEnter={() => setShowTooltip(mood.id)}
+                onMouseLeave={() => setShowTooltip(null)}
+              >
+                <button
+                  onClick={() => handleMoodSelect(mood)}
+                  className={`w-full p-4 rounded-2xl bg-gradient-to-br ${mood.color} text-white hover:scale-105 transition-all duration-200 shadow-lg relative border-2 border-red-400/30`}
+                >
+                  <div className="text-2xl mb-2">{mood.emoji}</div>
+                  <div className="font-semibold text-sm">{mood.name}</div>
+                </button>
+                
+                {/* Tooltip */}
+                {showTooltip === mood.id && (
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-black/90 text-white text-xs rounded-lg p-2 max-w-48 z-10">
+                    {mood.description}
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black/90"></div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-gray-400 mt-2 text-center">
+            🔒 Extreme mode content is for consenting adults (18+) only
+          </p>
+        </div>
+      )}
     </div>
   );
 };
