@@ -898,7 +898,7 @@ async def check_task_expiry(current_user: dict = Depends(get_current_user)):
 @api_router.get("/tasks/{task_id}/status")
 async def get_task_status(task_id: str, current_user: dict = Depends(get_current_user)):
     """Get detailed status of a specific task"""
-    task = await db.tasks.find_one({"id": task_id})
+    task = await db.tasks.find_one({"id": task_id}, {"_id": 0})
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     
