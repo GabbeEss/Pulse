@@ -786,7 +786,7 @@ async def redeem_reward(redeem_data: RewardRedeem, current_user: dict = Depends(
     reward = await db.rewards.find_one({
         "id": redeem_data.reward_id,
         "couple_id": current_user["couple_id"]
-    })
+    }, {"_id": 0})
     
     if not reward:
         raise HTTPException(status_code=404, detail="Reward not found")
