@@ -772,7 +772,7 @@ async def get_rewards(current_user: dict = Depends(get_current_user)):
     
     rewards = await db.rewards.find({
         "couple_id": current_user["couple_id"]
-    }).sort("created_at", -1).to_list(50)
+    }, {"_id": 0}).sort("created_at", -1).to_list(50)
     
     return rewards
 
