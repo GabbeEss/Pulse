@@ -539,7 +539,7 @@ async def get_moods(current_user: dict = Depends(get_current_user)):
     moods = await db.moods.find({
         "couple_id": current_user["couple_id"],
         "expires_at": {"$gt": datetime.utcnow()}
-    }).sort("created_at", -1).to_list(10)
+    }, {"_id": 0}).sort("created_at", -1).to_list(10)
     
     return moods
 
