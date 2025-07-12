@@ -806,6 +806,9 @@ const TaskCard = ({ task, currentUser, onProofSubmit, onTaskApprove, onRefresh }
     </>
   );
 };
+
+// Enhanced TaskCreator Component  
+const TaskCreator = ({ onTaskCreate }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [reward, setReward] = useState('');
