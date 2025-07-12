@@ -644,24 +644,36 @@ const LoginForm = () => {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const [loadingMessage, setLoadingMessage] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
+    setLoadingMessage('Signing you in...');
 
     try {
-      const endpoint = isLogin ? '/auth/login' : '/auth/register';
-      const data = isLogin 
-        ? { email, password }
-        : { email, password, name };
-
-      const response = await axios.post(`${API}${endpoint}`, data);
+      const response = await axios.post(`${API}/auth/${isLogin ? 'login' : 'register'}`, {
+        email,
+        name: isLogin ? undefined : name,
+        password
+      });
       
-      login(response.data.user, response.data.access_token);
+      setLoadingMessage('Setting up your account...');
+      
+      // Small delay to show loading states
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      login(response.data.access_token, response.data.user);
+      setLoadingMessage('Welcome to Pulse!');
+      
+      // Small delay before redirect
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
     } catch (error) {
-      setError(error.response?.data?.detail || 'An error occurred');
+      console.error('Auth error:', error);
+      setError(error.response?.data?.detail || 'Authentication failed. Please try again.');
+      setLoadingMessage('');
     } finally {
       setLoading(false);
     }
