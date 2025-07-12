@@ -23,11 +23,11 @@ const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
-  const login = (userData, tokenData) => {
+  const login = (accessToken, userData) => {
     setUser(userData);
-    setToken(tokenData);
-    localStorage.setItem('token', tokenData);
-    axios.defaults.headers.common['Authorization'] = `Bearer ${tokenData}`;
+    setToken(accessToken);
+    localStorage.setItem('token', accessToken);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
   };
 
   const logout = () => {
