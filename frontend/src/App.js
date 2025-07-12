@@ -636,8 +636,8 @@ const PairingScreen = ({ user }) => {
 
   const handlePairingCodeChange = (e) => {
     const value = e.target.value;
-    // Only allow digits and limit to 6 characters
-    const cleanedValue = value.replace(/\D/g, '').slice(0, 6);
+    // Allow alphanumeric characters (A-Z, 0-9) and limit to 6 characters
+    const cleanedValue = value.replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 6);
     setPairingCode(cleanedValue);
     
     // Clear any previous errors when user starts typing
