@@ -240,7 +240,7 @@ async def add_tokens(user_id: str, couple_id: str, tokens: int) -> int:
     )
     
     # Get updated balance
-    user_tokens = await db.user_tokens.find_one({"user_id": user_id, "couple_id": couple_id})
+    user_tokens = await db.user_tokens.find_one({"user_id": user_id, "couple_id": couple_id}, {"_id": 0})
     return user_tokens["tokens"]
 
 async def spend_tokens(user_id: str, couple_id: str, tokens: int) -> bool:
