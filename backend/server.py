@@ -277,6 +277,57 @@ async def login(user: UserLogin):
         }
     }
 
+@api_router.post("/pairing/generate")
+async def generate_pairing_code(current_user: dict = Depends(get_current_user)):
+    if current_user.get("couple_id"):
+        raise HTTPException(status_code=400, detail="Already linked with a partner")
+    
+    # Generate new pairing code
+    pairing_code = generate_pairing_code()
+    
+    # Create pairing request
+    pairing_request = {
+        "id": str(uuid.uuid4()),
+        "user_id": current_user["id"],
+        "pairing_code": pairing_code,
+        "used": False,
+        "created_at": datetime.utcnow()
+    }
+    
+    # Remove any existing pairing requests for this user
+    await db.pairing_requests.delete_many({"user_id": current_user["id"]})
+    
+    # Insert new pairing request
+    await db.pairing_requests.insert_one(pairing_request)
+    
+    return {"pairing_code": pairing_code, "message": "Pairing code generated"}
+
+@api_router.get("/pairing/code")
+async def get_pairing_code(current_user: dict = Depends(get_current_user)):
+    if current_user.get("couple_id"):
+        raise HTTPException(status_code=400, detail="Already linked with a partner")
+    
+    # Find existing pairing request
+    pairing_request = await db.pairing_requests.find_one({
+        "user_id": current_user["id"],
+        "used": False
+    })
+    
+    if not pairing_request:
+        # Generate new one
+        pairing_code = generate_pairing_code()
+        pairing_request = {
+            "id": str(uuid.uuid4()),
+            "user_id": current_user["id"],
+            "pairing_code": pairing_code,
+            "used": False,
+            "created_at": datetime.utcnow()
+        }
+        await db.pairing_requests.insert_one(pairing_request)
+        return {"pairing_code": pairing_code}
+    
+    return {"pairing_code": pairing_request["pairing_code"]}
+
 # Pairing routes
 @api_router.post("/pairing/link")
 async def link_with_partner(request: PairingRequest, current_user: dict = Depends(get_current_user)):
