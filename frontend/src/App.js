@@ -1281,6 +1281,8 @@ const TaskCard = ({ task, currentUser, onProofSubmit, onTaskApprove, onRefresh, 
       setSubmitting(false);
     }
   };
+
+  const handleApproval = async (approved) => {
     setSubmitting(true);
     try {
       await onTaskApprove(task.id, {
