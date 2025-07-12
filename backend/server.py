@@ -380,30 +380,70 @@ def get_mood_context(mood_type: str, is_extreme_mode: bool = False) -> str:
 
 def get_mock_ai_suggestion(mood_type: str, intensity: int, boundaries: List[str], is_extreme_mode: bool = False) -> dict:
     """
-    Fallback mock suggestions when AI is unavailable
+    Enhanced fallback mock suggestions with mood-specific content
     """
-    suggestions = [
+    regular_suggestions = [
         {
-            "title": "Cook naked with your apron on",
-            "description": "Remove your underwear and prepare dinner while sending a photo of your plate.",
-            "default_duration_minutes": 90
-        },
-        {
-            "title": "Sensual massage time",
-            "description": "Give your partner a 10-minute massage with oils and take a photo of the setup.",
+            "title": "Cook together with a twist",
+            "description": "Prepare dinner while sending cute messages to each other throughout.",
             "default_duration_minutes": 60
         },
         {
-            "title": "Send a spicy voice message",
-            "description": "Record a 30-second voice message telling your partner what you want to do to them.",
+            "title": "Sensual massage time",
+            "description": "Give your partner a 15-minute massage and take a photo of the setup.",
+            "default_duration_minutes": 45
+        },
+        {
+            "title": "Send a flirty voice message",
+            "description": "Record a sweet message telling your partner what you love about them.",
+            "default_duration_minutes": 30
+        }
+    ]
+    
+    spicy_suggestions = [
+        {
+            "title": "Tease with a photo",
+            "description": "Take a playful photo that shows just enough to make your partner excited.",
             "default_duration_minutes": 30
         },
         {
-            "title": "Take a teasing photo",
-            "description": "Take a photo showing just enough to make your partner want more.",
+            "title": "Write a steamy note",
+            "description": "Leave your partner a handwritten note describing what you want to do together.",
+            "default_duration_minutes": 20
+        },
+        {
+            "title": "Dance for your partner",
+            "description": "Put on your favorite song and give your partner a private dance show.",
             "default_duration_minutes": 45
         }
     ]
+    
+    extreme_suggestions = [
+        {
+            "title": "Submit a confession",
+            "description": "Write and send your partner your deepest fantasy about them.",
+            "default_duration_minutes": 30
+        },
+        {
+            "title": "Pleasure yourself thinking of them",
+            "description": "Focus entirely on your partner while pleasuring yourself and describe the experience.",
+            "default_duration_minutes": 45
+        },
+        {
+            "title": "Create anticipation",
+            "description": "Send detailed messages about exactly what you want to do to your partner.",
+            "default_duration_minutes": 60
+        }
+    ]
+    
+    # Choose suggestions based on mood and extreme mode
+    if is_extreme_mode and mood_type in ['available_for_use', 'feeling_submissive', 'wanna_edge', 'use_me_how_you_want', 'feeling_dominant']:
+        suggestions = extreme_suggestions
+    elif mood_type in ['feeling_spicy', 'horny', 'teasing'] + ['available_for_use', 'feeling_submissive', 'wanna_edge', 'use_me_how_you_want']:
+        suggestions = spicy_suggestions
+    else:
+        suggestions = regular_suggestions
+    
     return random.choice(suggestions)
 
 # Authentication routes
