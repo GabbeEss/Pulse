@@ -272,8 +272,8 @@ async def get_couple_tokens(couple_id: str) -> Dict[str, int]:
 # OpenAI integration for AI suggestions
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 
-# Mock AI suggestion function
-async def get_ai_suggestion(mood_type: str, intensity: int, boundaries: List[str]) -> dict:
+# Enhanced AI suggestion function with mood-based context
+async def get_ai_suggestion(mood_type: str, intensity: int, boundaries: List[str], is_extreme_mode: bool = False) -> dict:
     """
     Generate AI-powered HeatTask suggestions using OpenAI GPT-4o
     """
