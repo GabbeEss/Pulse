@@ -732,7 +732,7 @@ const LoginForm = () => {
             disabled={loading}
             className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
           >
-            {loading ? 'Loading...' : (isLogin ? 'Sign In' : 'Sign Up')}
+            {loading ? (loadingMessage || 'Loading...') : (isLogin ? 'Sign In' : 'Sign Up')}
           </button>
         </form>
 
