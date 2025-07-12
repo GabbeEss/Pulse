@@ -221,6 +221,54 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid authentication credentials")
 
+# Token management helper functions
+async def get_user_tokens(user_id: str, couple_id: str) -> int:
+    """Get current token balance for a user"""
+    user_tokens = await db.user_tokens.find_one({"user_id": user_id, "couple_id": couple_id})
+    return user_tokens["tokens"] if user_tokens else 0
+
+async def add_tokens(user_id: str, couple_id: str, tokens: int) -> int:
+    """Add tokens to user's balance and return new balance"""
+    # Update or create user tokens document
+    result = await db.user_tokens.update_one(
+        {"user_id": user_id, "couple_id": couple_id},
+        {
+            "$inc": {"tokens": tokens, "lifetime_tokens": tokens},
+            "$set": {"updated_at": datetime.utcnow()}
+        },
+        upsert=True
+    )
+    
+    # Get updated balance
+    user_tokens = await db.user_tokens.find_one({"user_id": user_id, "couple_id": couple_id})
+    return user_tokens["tokens"]
+
+async def spend_tokens(user_id: str, couple_id: str, tokens: int) -> bool:
+    """Spend tokens if user has enough balance. Returns True if successful"""
+    current_balance = await get_user_tokens(user_id, couple_id)
+    
+    if current_balance < tokens:
+        return False
+    
+    await db.user_tokens.update_one(
+        {"user_id": user_id, "couple_id": couple_id},
+        {
+            "$inc": {"tokens": -tokens},
+            "$set": {"updated_at": datetime.utcnow()}
+        }
+    )
+    return True
+
+async def get_couple_tokens(couple_id: str) -> Dict[str, int]:
+    """Get token balances for both users in a couple"""
+    tokens_data = await db.user_tokens.find({"couple_id": couple_id}).to_list(2)
+    
+    result = {}
+    for token_doc in tokens_data:
+        result[token_doc["user_id"]] = token_doc["tokens"]
+    
+    return result
+
 # OpenAI integration for AI suggestions
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 
