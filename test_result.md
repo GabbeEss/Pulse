@@ -122,20 +122,39 @@ backend:
       - working: true
         agent: "testing"
         comment: "VERIFIED: All pairing endpoints working perfectly with no timeouts. Performance testing confirms operations complete in <1 second vs previous timeouts. Testing agent made additional optimizations for MongoDB query and logging during comprehensive testing."
-  - task: "OpenAI Integration for AI-Suggested HeatTasks"
-    implemented: true
-    working: true
+  - task: "Enhanced HeatTask System - Backend Models and API"
+    implemented: false
+    working: false
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
-      - working: true
+      - working: false
         agent: "main"
-        comment: "IMPLEMENTED: Replaced mock AI suggestion function with OpenAI GPT-4o integration using emergentintegrations library. Added proper error handling and fallback to mock suggestions. Configured system message for intimacy coaching context. API key added to environment."
-      - working: true
-        agent: "testing"
-        comment: "COMPREHENSIVE TESTING COMPLETED: OpenAI integration is fully functional and properly implemented. System correctly attempts GPT-4o API calls via emergentintegrations library. Due to OpenAI quota limits, system gracefully falls back to mock suggestions as designed. All AI endpoints (92.7% success rate) working: ✅ Various mood types/intensities ✅ Error handling ✅ Fallback mechanism ✅ Performance (<15s response) ✅ Integration with mood creation ✅ Edge case handling. Architecture is robust and production-ready."
+        comment: "IMPLEMENTING: Enhanced HeatTask models with countdown timers, photo proof submission (base64), approval workflow, and token rewards system."
+  - task: "Token/Reward Bank System - Backend"
+    implemented: false
+    working: false
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "IMPLEMENTING: Token earning system on task completion, reward vault management, and token redemption API endpoints."
+  - task: "Real-time Notifications - WebSocket Enhancement"
+    implemented: false
+    working: false
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "IMPLEMENTING: Enhanced WebSocket notifications for task assignment, expiration warnings, proof submission, and reward redemption."
 
 frontend:
   - task: "Pairing UI Integration"
