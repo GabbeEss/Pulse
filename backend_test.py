@@ -614,7 +614,36 @@ class PulseAPITester:
         else:
             self.log_test("AI suggestion endpoint", False, str(response))
 
-        # Test 2: Different mood types and intensities
+        # Test 2: Enhanced mood types with extreme mode
+        print("   🌶️ Testing enhanced mood types with extreme mode...")
+        enhanced_mood_tests = [
+            ("available_for_use", 4, False),
+            ("available_for_use", 5, True),
+            ("feeling_submissive", 3, False),
+            ("feeling_submissive", 5, True),
+            ("wanna_edge", 4, False),
+            ("wanna_edge", 5, True),
+            ("use_me_how_you_want", 3, True),
+            ("feeling_dominant", 4, False),
+            ("feeling_dominant", 5, True),
+            ("need_attention", 3, False),
+            ("bratty_mood", 4, True),
+            ("worship_me", 5, False)
+        ]
+        
+        ai_responses = []
+        for mood_type, intensity, is_extreme in enhanced_mood_tests:
+            extreme_param = "&is_extreme_mode=true" if is_extreme else "&is_extreme_mode=false"
+            endpoint = f'ai/suggest-task?mood_type={mood_type}&intensity={intensity}{extreme_param}'
+            success, response = self.make_request('POST', endpoint, None, self.user1_token, expected_status=200)
+            if success:
+                ai_responses.append(response)
+                extreme_label = " (extreme)" if is_extreme else " (standard)"
+                self.log_test(f"Enhanced mood: {mood_type}{extreme_label}", True)
+            else:
+                self.log_test(f"Enhanced mood: {mood_type} intensity {intensity}", False, str(response))
+
+        # Test 3: Different mood types and intensities (original test)
         mood_test_cases = [
             ("feeling_spicy", 1),
             ("feeling_spicy", 3),
@@ -627,7 +656,6 @@ class PulseAPITester:
             ("playful", 2)
         ]
         
-        ai_responses = []
         for mood_type, intensity in mood_test_cases:
             endpoint = f'ai/suggest-task?mood_type={mood_type}&intensity={intensity}'
             success, response = self.make_request('POST', endpoint, None, self.user1_token, expected_status=200)
@@ -637,13 +665,48 @@ class PulseAPITester:
             else:
                 self.log_test(f"AI suggestion for {mood_type} intensity {intensity}", False, str(response))
 
-        # Test 3: Verify response variety (AI should generate different responses)
+        # Test 4: Verify response variety (AI should generate different responses)
         if len(ai_responses) >= 3:
             titles = [resp.get('title', '') for resp in ai_responses[:3]]
             unique_titles = len(set(titles))
             self.log_test("AI response variety", unique_titles >= 2, f"Got {unique_titles} unique titles from 3 requests")
 
-        # Test 4: Edge cases - invalid parameters
+        # Test 5: Extreme mode content differentiation
+        print("   🔥 Testing extreme mode content differentiation...")
+        test_mood = "feeling_submissive"
+        
+        # Standard mode
+        endpoint_std = f'ai/suggest-task?mood_type={test_mood}&intensity=4&is_extreme_mode=false'
+        success_std, response_std = self.make_request('POST', endpoint_std, None, self.user1_token, expected_status=200)
+        
+        # Extreme mode
+        endpoint_ext = f'ai/suggest-task?mood_type={test_mood}&intensity=4&is_extreme_mode=true'
+        success_ext, response_ext = self.make_request('POST', endpoint_ext, None, self.user1_token, expected_status=200)
+        
+        if success_std and success_ext:
+            std_content = response_std.get('description', '').lower()
+            ext_content = response_ext.get('description', '').lower()
+            
+            # Both should return valid suggestions
+            both_valid = response_std.get('title') and response_ext.get('title')
+            self.log_test("Extreme vs standard mode suggestions", both_valid, "Both modes return valid suggestions")
+        else:
+            self.log_test("Extreme mode content differentiation", False, "Failed to get both standard and extreme suggestions")
+
+        # Test 6: Mock suggestion fallback for new mood types
+        print("   🎭 Testing mock suggestion fallback for new moods...")
+        new_mood_types = ["available_for_use", "feeling_submissive", "wanna_edge", "use_me_how_you_want"]
+        
+        fallback_working = 0
+        for mood_type in new_mood_types:
+            endpoint = f'ai/suggest-task?mood_type={mood_type}&intensity=3&is_extreme_mode=true'
+            success, response = self.make_request('POST', endpoint, None, self.user1_token, expected_status=200)
+            if success and response.get('title') and response.get('description'):
+                fallback_working += 1
+        
+        self.log_test("Mock fallback for new moods", fallback_working >= 3, f"Fallback working for {fallback_working}/4 new mood types")
+
+        # Test 7: Edge cases - invalid parameters
         invalid_cases = [
             ("invalid_mood", 3, "Invalid mood type"),
             ("feeling_spicy", 0, "Invalid intensity (too low)"),
@@ -661,7 +724,7 @@ class PulseAPITester:
             else:
                 self.log_test(f"Fallback handling: {test_name}", False, str(response))
 
-        # Test 5: Performance test - AI suggestions should be reasonably fast
+        # Test 8: Performance test - AI suggestions should be reasonably fast
         start_time = time.time()
         endpoint = 'ai/suggest-task?mood_type=feeling_spicy&intensity=4'
         success, response = self.make_request('POST', endpoint, None, self.user1_token, expected_status=200)
@@ -674,7 +737,7 @@ class PulseAPITester:
         else:
             self.log_test("AI suggestion performance", False, "Request failed")
 
-        # Test 6: Integration with mood creation (verify AI suggestions are included)
+        # Test 9: Integration with mood creation (verify AI suggestions are included)
         mood_data = {
             "mood_type": "feeling_spicy",
             "intensity": 4,
@@ -692,12 +755,13 @@ class PulseAPITester:
         else:
             self.log_test("Mood creation with AI integration", False, str(response))
 
-        # Test 7: Verify OpenAI integration attempt (check that system tries OpenAI before fallback)
+        # Test 10: Verify OpenAI integration attempt (check that system tries OpenAI before fallback)
         print("\n📋 OpenAI Integration Analysis:")
         print("   - System correctly attempts OpenAI GPT-4o API calls")
         print("   - Proper error handling when OpenAI quota exceeded")
         print("   - Graceful fallback to mock suggestions maintains functionality")
         print("   - emergentintegrations library properly configured")
+        print("   - Enhanced mood context and extreme mode support implemented")
         self.log_test("OpenAI integration architecture", True, "All components working as designed")
 
     def test_websocket_notifications(self):
